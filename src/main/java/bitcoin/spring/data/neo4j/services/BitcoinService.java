@@ -44,8 +44,8 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Coinbase> findCoinbase(String blockHash) {
-        return entityOrNotFound(coinbaseRepository.getCoinbaseByCoinbaseId("coinbase-" + blockHash));
+    public ResponseEntity<Coinbase> findCoinbase(String coinbaseId) {
+        return entityOrNotFound(coinbaseRepository.getCoinbaseByCoinbaseId(coinbaseId));
     }
 
     @Transactional(readOnly = true)

@@ -29,8 +29,9 @@ public class BitcoinController {
     }
 
     @GetMapping("/getCoinbase")
-    public HttpEntity<Coinbase> getCoinbase(@RequestParam(name = "blockHash") String blockHash) {
-        return this.bitcoinService.findCoinbase(blockHash);
+    @CrossOrigin
+    public HttpEntity<Coinbase> getCoinbase(@RequestParam(name = "id") String coinbaseId) {
+        return this.bitcoinService.findCoinbase(coinbaseId);
     }
 
     @GetMapping("/getEntity")

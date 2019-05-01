@@ -1,5 +1,6 @@
 package bitcoin.spring.data.neo4j.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
@@ -16,6 +17,9 @@ public class Address {
 
     private String address;
 
+    public Address() {
+    }
+
     public String getAddress() {
         return address;
     }
@@ -24,14 +28,15 @@ public class Address {
         return outputs;
     }
 
-    public List<Entity> getEntities() {
-        return entities;
+    public Entity getEntity() {
+        return entity;
     }
+
 
     @Relationship(type = "LOCKED_TO", direction = Relationship.INCOMING)
     private List<Output> outputs;
 
 
-    @Relationship(type = "HAS_ENTITY", direction = Relationship.OUTGOING)
-    private List<Entity> entities;
+    @Relationship(type = "HAS_ENTITY")
+    private Entity entity;
 }

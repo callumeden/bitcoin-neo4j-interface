@@ -25,10 +25,10 @@ public class Output {
         return value;
     }
 
-    public List<Transaction> getProducedByTransaction() {
+    public Transaction getProducedByTransaction() {
         return producedByTransaction;
     }
 
     @Relationship(type = "OUTPUTS", direction = Relationship.INCOMING)
-    private List<Transaction> producedByTransaction;
+    private Transaction producedByTransaction;
 }
