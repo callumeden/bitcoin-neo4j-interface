@@ -1,5 +1,6 @@
 package bitcoin.spring.data.neo4j.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
@@ -31,4 +32,12 @@ public class Output {
 
     @Relationship(type = "OUTPUTS", direction = Relationship.INCOMING)
     private Transaction producedByTransaction;
+
+    @JsonIgnoreProperties("outputs")
+    @Relationship(type = "LOCKED_TO")
+    private Address lockedToAddress;
+
+    public Address getLockedToAddress() {
+        return lockedToAddress;
+    }
 }

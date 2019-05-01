@@ -29,37 +29,37 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Block> findBlockByHash(String hash) {
+    public ResponseEntity findBlockByHash(String hash) {
         return entityOrNotFound(blockRepository.findByHash(hash));
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Transaction> findTransactionById(String txid) {
+    public ResponseEntity findTransactionById(String txid) {
         return entityOrNotFound(transactionRepository.getTransactionByTransactionId(txid));
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Address> findAddress(String address) {
+    public ResponseEntity findAddress(String address) {
         return entityOrNotFound(addressRepository.getAddressByAddress(address));
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Coinbase> findCoinbase(String coinbaseId) {
+    public ResponseEntity findCoinbase(String coinbaseId) {
         return entityOrNotFound(coinbaseRepository.getCoinbaseByCoinbaseId(coinbaseId));
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Entity> findEntity(String name) {
+    public ResponseEntity findEntity(String name) {
         return entityOrNotFound(entityRepository.getEntityByName(name));
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Output> findOutput(String id) {
+    public ResponseEntity findOutput(String id) {
         return entityOrNotFound(outputRepository.getOutputByOutputId(id));
     }
 
-    private <T> ResponseEntity<T> entityOrNotFound(T result) {
-        return result == null ? new ResponseEntity<>(HttpStatus.NOT_FOUND) :
+    private <T> ResponseEntity entityOrNotFound(T result) {
+        return result == null ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("Could not find entity") :
                 new ResponseEntity<>(result, HttpStatus.OK);
     }
 

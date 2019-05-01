@@ -18,37 +18,37 @@ public class BitcoinController {
 
     @GetMapping("/getAddress")
     @CrossOrigin
-    public HttpEntity<Address> getAddress(@RequestParam(name = "address") String address) {
+    public HttpEntity getAddress(@RequestParam(name = "address") String address) {
         return this.bitcoinService.findAddress(address);
     }
 
     @GetMapping("/getBlock")
     @CrossOrigin
-    public HttpEntity<Block> getBlock(@RequestParam(name = "hash") String hash) {
+    public HttpEntity getBlock(@RequestParam(name = "hash") String hash) {
         return this.bitcoinService.findBlockByHash(hash);
     }
 
     @GetMapping("/getCoinbase")
     @CrossOrigin
-    public HttpEntity<Coinbase> getCoinbase(@RequestParam(name = "id") String coinbaseId) {
+    public HttpEntity getCoinbase(@RequestParam(name = "id") String coinbaseId) {
         return this.bitcoinService.findCoinbase(coinbaseId);
     }
 
     @GetMapping("/getEntity")
     @CrossOrigin
-    public HttpEntity<Entity> getEntity(@RequestParam(name = "name") String name) {
+    public HttpEntity getEntity(@RequestParam(name = "name") String name) {
         return this.bitcoinService.findEntity(name);
     }
 
     @GetMapping("/getOutput")
     @CrossOrigin
-    public HttpEntity<Output> getOutput(@RequestParam(name = "id") String id) {
+    public HttpEntity getOutput(@RequestParam(name = "id") String id) {
         return this.bitcoinService.findOutput(id);
     }
 
     @GetMapping("/getTransaction")
     @CrossOrigin
-    public HttpEntity<Transaction> getTransaction(@RequestParam(name = "txid") String txid) {
+    public HttpEntity getTransaction(@RequestParam(name = "txid") String txid) {
         return this.bitcoinService.findTransactionById(txid);
     }
 
