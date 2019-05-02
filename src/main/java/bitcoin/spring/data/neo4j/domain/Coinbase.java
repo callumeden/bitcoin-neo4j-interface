@@ -23,7 +23,15 @@ public class Coinbase {
     @Relationship(type = "COINBASE", direction = Relationship.INCOMING)
     private Block block;
 
+    @JsonIgnoreProperties("coinbaseInput")
+    @Relationship(type = "INPUTS")
+    private Transaction inputsTransaction;
+
     public Block getBlock() {
         return block;
+    }
+
+    public Transaction getInputsTransaction() {
+        return inputsTransaction;
     }
 }

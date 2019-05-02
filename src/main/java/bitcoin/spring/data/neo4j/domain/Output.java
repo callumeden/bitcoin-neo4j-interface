@@ -6,8 +6,6 @@ import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 
-import java.util.List;
-
 @NodeEntity(label = "OUTPUT")
 public class Output {
 
@@ -30,8 +28,12 @@ public class Output {
         return producedByTransaction;
     }
 
+    @JsonIgnoreProperties({"outputs", "inputs"})
     @Relationship(type = "OUTPUTS", direction = Relationship.INCOMING)
     private Transaction producedByTransaction;
+
+    @Relationship(type = "INPUTS")
+    private Transaction inputsTransaction;
 
     @JsonIgnoreProperties("outputs")
     @Relationship(type = "LOCKED_TO")
@@ -39,5 +41,9 @@ public class Output {
 
     public Address getLockedToAddress() {
         return lockedToAddress;
+    }
+
+    public Transaction getInputsTransaction() {
+        return inputsTransaction;
     }
 }
