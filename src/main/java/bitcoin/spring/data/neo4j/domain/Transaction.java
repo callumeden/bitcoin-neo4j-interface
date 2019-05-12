@@ -1,5 +1,7 @@
 package bitcoin.spring.data.neo4j.domain;
 
+import bitcoin.spring.data.neo4j.domain.relationships.InputRelation;
+import bitcoin.spring.data.neo4j.domain.relationships.OutputRelation;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
@@ -28,19 +30,19 @@ public class Transaction {
     @Relationship(type = "MINED_IN", direction = Relationship.OUTGOING)
     private Block minedInBlock;
 
-    @JsonIgnoreProperties({"producedByTransaction", "inputsTransaction"})
+    @JsonIgnoreProperties("transaction")
     @Relationship(type = "INPUTS", direction = Relationship.INCOMING)
-    private List<Output> inputs;
+    private List<InputRelation> inputs;
 
     @JsonIgnoreProperties("inputsTransaction")
     @Relationship(type = "INPUTS", direction = Relationship.INCOMING)
     private Coinbase coinbaseInput;
 
-    @JsonIgnoreProperties("producedByTransaction")
+    @JsonIgnoreProperties("transaction")
     @Relationship(type = "OUTPUTS")
-    private List<Output> outputs;
+    private List<OutputRelation> outputs;
 
-    public List<Output> getInputs() {
+    public List<InputRelation> getInputs() {
         return inputs;
     }
 
@@ -48,7 +50,8 @@ public class Transaction {
         return coinbaseInput;
     }
 
-    public List<Output> getOutputs() {
+    public List<OutputRelation> getOutputs() {
         return outputs;
     }
+
 }

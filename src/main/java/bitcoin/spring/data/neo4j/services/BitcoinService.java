@@ -1,6 +1,7 @@
 package bitcoin.spring.data.neo4j.services;
 
 import bitcoin.spring.data.neo4j.domain.*;
+import bitcoin.spring.data.neo4j.domain.relationships.OutputRelation;
 import bitcoin.spring.data.neo4j.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,11 @@ public class BitcoinService {
 
     @Transactional(readOnly = true)
     public ResponseEntity findTransactionById(String txid) {
-        return entityOrNotFound(transactionRepository.getTransactionByTransactionId(txid));
+        return entityOrNotFound(findTransactionModelById(txid));
+    }
+
+    private Transaction findTransactionModelById(String txid) {
+        return transactionRepository.getTransactionByTransactionId(txid);
     }
 
     @Transactional(readOnly = true)
@@ -55,6 +60,17 @@ public class BitcoinService {
 
     @Transactional(readOnly = true)
     public ResponseEntity findOutput(String id) {
+        Output output = outputRepository.getOutputByOutputId(id);
+
+        if (output != null) {
+            //This makes the output relation have a full transaction in its relation, so it contains its block
+            //to fetch the exchange rates from
+            OutputRelation relation = output.getProducedByTransaction();
+            Transaction producedByTx = relation.getTransaction();
+            Transaction fullProducedByTx = findTransactionModelById(producedByTx.getTransactionId());
+            relation.setTransaction(fullProducedByTx);
+        }
+
         return entityOrNotFound(outputRepository.getOutputByOutputId(id));
     }
 
