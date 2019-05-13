@@ -28,6 +28,10 @@ public class InputRelation {
         return transaction;
     }
 
+    public void setTransaction(Transaction transaction) {
+        this.transaction = transaction;
+    }
+
     public double getGbpValue() {
         double inputValue = input.getValue();
         double gbpExchangeRate = transaction.getMinedInBlock().getGbp();
