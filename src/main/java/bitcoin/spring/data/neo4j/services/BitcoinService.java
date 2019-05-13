@@ -68,14 +68,19 @@ public class BitcoinService {
             //to fetch the exchange rates from
             OutputRelation outRelation = output.getProducedByTransaction();
 
-            Transaction producedByTx = outRelation.getTransaction();
-            Transaction fullProducedByTx = findTransactionModelById(producedByTx.getTransactionId());
-            outRelation.setTransaction(fullProducedByTx);
+            if (outRelation != null) {
+                Transaction producedByTx = outRelation.getTransaction();
+                Transaction fullProducedByTx = findTransactionModelById(producedByTx.getTransactionId());
+                outRelation.setTransaction(fullProducedByTx);
+            }
 
             InputRelation inRelation = output.getInputsTransaction();
-            Transaction inputsTx = inRelation.getTransaction();
-            Transaction fullInputsTx = findTransactionModelById(inputsTx.getTransactionId());
-            inRelation.setTransaction(fullInputsTx);
+            if (inRelation != null) {
+                Transaction inputsTx = inRelation.getTransaction();
+                Transaction fullInputsTx = findTransactionModelById(inputsTx.getTransactionId());
+                inRelation.setTransaction(fullInputsTx);
+            }
+
         }
 
         return entityOrNotFound(output);

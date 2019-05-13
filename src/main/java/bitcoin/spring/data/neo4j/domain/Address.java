@@ -33,6 +33,7 @@ public class Address {
     }
 
 
+    @JsonIgnoreProperties("lockedToAddress")
     @Relationship(type = "LOCKED_TO", direction = Relationship.INCOMING)
     private List<Output> outputs;
 
