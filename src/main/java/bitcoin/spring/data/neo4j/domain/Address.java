@@ -6,7 +6,10 @@ import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @NodeEntity(label = "ADDRESS")
 public class Address {
@@ -40,4 +43,20 @@ public class Address {
 
     @Relationship(type = "HAS_ENTITY")
     private Entity entity;
+
+    @Relationship(type = "INPUT_HEURISTIC_LINKED_ADDRESSES", direction = Relationship.UNDIRECTED)
+    private Set<Address> inputHeuristicLinkedAddresses;
+
+
+    public Set<Address> getInputHeuristicLinkedAddresses() {
+        return inputHeuristicLinkedAddresses;
+    }
+
+    public void addInputHeuristicLinkedAddresses(Address linkedAddress) {
+        if (this.inputHeuristicLinkedAddresses == null) {
+            this.inputHeuristicLinkedAddresses = new HashSet<>();
+        }
+
+        this.inputHeuristicLinkedAddresses.add(linkedAddress);
+    }
 }
