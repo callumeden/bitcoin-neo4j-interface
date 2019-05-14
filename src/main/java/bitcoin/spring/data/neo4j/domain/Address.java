@@ -44,6 +44,7 @@ public class Address {
     @Relationship(type = "HAS_ENTITY")
     private Entity entity;
 
+    @JsonIgnoreProperties("inputHeuristicLinkedAddresses")
     @Relationship(type = "INPUT_HEURISTIC_LINKED_ADDRESSES", direction = Relationship.UNDIRECTED)
     private Set<Address> inputHeuristicLinkedAddresses;
 
