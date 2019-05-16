@@ -67,7 +67,7 @@ public class ClusteringService {
                 // Saves the updated addresses back to Neo4J repo
                 addressesSpendingTransactionInputs.forEach(updatedAddress -> {
                     System.out.println("saving address" + updatedAddress.getAddress());
-                    this.addressRepository.save(updatedAddress);
+                    this.addressRepository.save(updatedAddress, 0);
                 });
 
             });
