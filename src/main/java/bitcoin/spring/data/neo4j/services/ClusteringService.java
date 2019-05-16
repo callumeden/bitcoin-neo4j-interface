@@ -30,6 +30,7 @@ public class ClusteringService {
         this.outputRepository = outputRepository;
     }
 
+
     public ResponseEntity clusterByInput() {
         Pageable pageable = PageRequest.of(0, 50);
 
@@ -54,7 +55,11 @@ public class ClusteringService {
                     Address addressSpendingTransactionInput = refetchedTransactionInput.getLockedToAddress();
 
                     if (addressSpendingTransactionInput != null && !addressesSpendingTransactionInputs.contains(addressSpendingTransactionInput)) {
-                        addressesSpendingTransactionInputs.forEach(sameUserAddress -> sameUserAddress.addInputHeuristicLinkedAddresses(addressSpendingTransactionInput));
+                        addressesSpendingTransactionInputs.forEach(sameUserAddress -> {
+                            System.out.println("test");
+                            sameUserAddress.addInputHeuristicLinkedAddresses(addressSpendingTransactionInput);
+                        });
+
                         addressesSpendingTransactionInputs.add(addressSpendingTransactionInput);
                     }
                 });
