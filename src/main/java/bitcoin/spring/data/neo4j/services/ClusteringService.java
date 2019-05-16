@@ -8,7 +8,6 @@ import bitcoin.spring.data.neo4j.repositories.AddressRepository;
 import bitcoin.spring.data.neo4j.repositories.OutputRepository;
 import bitcoin.spring.data.neo4j.repositories.TransactionRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +35,6 @@ public class ClusteringService {
 
         while (true) {
             Page<Transaction> allTransactions = transactionRepository.findAll(pageable);
-            System.out.println("*********** Processing page " + allTransactions.getNumber());
             allTransactions.forEach(transaction -> {
 
                 if (transaction.getInputs() == null || transaction.getInputs().size() < 2) {
@@ -49,7 +47,6 @@ public class ClusteringService {
 
                 transactionInputs.forEach(inputRelation -> {
                     Output transactionInput = inputRelation.getInput();
-                    System.out.println("Output ID -------> " + transactionInput.getOutputId());
 
                     Output refetchedTransactionInput = this.outputRepository.getOutputByOutputId(transactionInput.getOutputId());
                     Address addressSpendingTransactionInput = refetchedTransactionInput.getLockedToAddress();
