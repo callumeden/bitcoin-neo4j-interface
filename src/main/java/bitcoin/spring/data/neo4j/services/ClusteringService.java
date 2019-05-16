@@ -31,7 +31,7 @@ public class ClusteringService {
     }
 
     public ResponseEntity clusterByInput() {
-        Pageable pageable = PageRequest.of(0, 1000);
+        Pageable pageable = PageRequest.of(0, 50);
 
         while (true) {
             Page<Transaction> allTransactions = transactionRepository.findAll(pageable);
@@ -48,6 +48,8 @@ public class ClusteringService {
 
                 transactionInputs.forEach(inputRelation -> {
                     Output transactionInput = inputRelation.getInput();
+                    System.out.println("Output ID -------> " + transactionInput.getOutputId());
+
                     Output refetchedTransactionInput = this.outputRepository.getOutputByOutputId(transactionInput.getOutputId());
                     Address addressSpendingTransactionInput = refetchedTransactionInput.getLockedToAddress();
 
