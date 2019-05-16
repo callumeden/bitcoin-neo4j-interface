@@ -55,20 +55,14 @@ public class ClusteringService {
                     Address addressSpendingTransactionInput = refetchedTransactionInput.getLockedToAddress();
 
                     if (addressSpendingTransactionInput != null && !addressesSpendingTransactionInputs.contains(addressSpendingTransactionInput)) {
-                        addressesSpendingTransactionInputs.forEach(sameUserAddress -> {
-                            System.out.println("test");
-                            sameUserAddress.addInputHeuristicLinkedAddresses(addressSpendingTransactionInput);
-                        });
+                        addressesSpendingTransactionInputs.forEach(sameUserAddress -> sameUserAddress.addInputHeuristicLinkedAddresses(addressSpendingTransactionInput));
 
                         addressesSpendingTransactionInputs.add(addressSpendingTransactionInput);
                     }
                 });
 
                 // Saves the updated addresses back to Neo4J repo
-                addressesSpendingTransactionInputs.forEach(updatedAddress -> {
-                    System.out.println("saving address" + updatedAddress.getAddress());
-                    this.addressRepository.save(updatedAddress, 0);
-                });
+                addressesSpendingTransactionInputs.forEach(updatedAddress -> this.addressRepository.save(updatedAddress, 0));
 
             });
 
