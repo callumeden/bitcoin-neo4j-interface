@@ -1,6 +1,5 @@
 package bitcoin.spring.data.neo4j.controller;
 
-import bitcoin.spring.data.neo4j.domain.*;
 import bitcoin.spring.data.neo4j.services.BitcoinService;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpEntity;

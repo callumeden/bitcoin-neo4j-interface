@@ -7,6 +7,10 @@ import bitcoin.spring.data.neo4j.domain.relationships.InputRelation;
 import bitcoin.spring.data.neo4j.repositories.AddressRepository;
 import bitcoin.spring.data.neo4j.repositories.OutputRepository;
 import bitcoin.spring.data.neo4j.repositories.TransactionRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -27,34 +31,44 @@ public class ClusteringService {
     }
 
     public ResponseEntity clusterByInput() {
-        Iterable<Transaction> allTransactions = transactionRepository.findAll();
+        Pageable pageable = PageRequest.of(0, 1000);
 
-        allTransactions.forEach(transaction -> {
+        while (true) {
+            Page<Transaction> allTransactions = transactionRepository.findAll(pageable);
+            System.out.println("*********** Processing page " + allTransactions.getNumber());
+            allTransactions.forEach(transaction -> {
 
-            if (transaction.getInputs() == null || transaction.getInputs().size() < 2) {
-                //coinbase input or only one input
-                return;//dw just skips this iteration only
-            }
-
-            List<InputRelation> transactionInputs = transaction.getInputs();
-            Set<Address> addressesSpendingTransactionInputs = new HashSet<>();
-
-            transactionInputs.forEach(inputRelation -> {
-
-                Output transactionInput = inputRelation.getInput();
-                Output refetchedTransactionInput = this.outputRepository.getOutputByOutputId(transactionInput.getOutputId());
-                Address addressSpendingTransactionInput = refetchedTransactionInput.getLockedToAddress();
-
-                if (addressSpendingTransactionInput != null && !addressesSpendingTransactionInputs.contains(addressSpendingTransactionInput)) {
-                    addressesSpendingTransactionInputs.forEach(sameUserAddress -> sameUserAddress.addInputHeuristicLinkedAddresses(addressSpendingTransactionInput));
-                    addressesSpendingTransactionInputs.add(addressSpendingTransactionInput);
+                if (transaction.getInputs() == null || transaction.getInputs().size() < 2) {
+                    //coinbase input or only one input
+                    return;//dw just skips this iteration only
                 }
+
+                List<InputRelation> transactionInputs = transaction.getInputs();
+                Set<Address> addressesSpendingTransactionInputs = new HashSet<>();
+
+                transactionInputs.forEach(inputRelation -> {
+                    Output transactionInput = inputRelation.getInput();
+                    Output refetchedTransactionInput = this.outputRepository.getOutputByOutputId(transactionInput.getOutputId());
+                    Address addressSpendingTransactionInput = refetchedTransactionInput.getLockedToAddress();
+
+                    if (addressSpendingTransactionInput != null && !addressesSpendingTransactionInputs.contains(addressSpendingTransactionInput)) {
+                        addressesSpendingTransactionInputs.forEach(sameUserAddress -> sameUserAddress.addInputHeuristicLinkedAddresses(addressSpendingTransactionInput));
+                        addressesSpendingTransactionInputs.add(addressSpendingTransactionInput);
+                    }
+                });
+
+                // Saves the updated addresses back to Neo4J repo
+                addressesSpendingTransactionInputs.forEach(this.addressRepository::save);
+
             });
 
-            //Saves the updated addresses back to Neo4J repo
-            addressesSpendingTransactionInputs.forEach(this.addressRepository::save);
+            if (!allTransactions.hasNext()) {
+                break;
+            }
 
-        });
+            pageable = allTransactions.nextPageable();
+        }
+
         return ResponseEntity.status(200).body("Clustering Complete");
     }
 }
