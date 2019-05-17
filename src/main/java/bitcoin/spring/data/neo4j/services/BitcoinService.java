@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.stream.Collectors;
+
 @Service
 public class BitcoinService {
 
@@ -46,7 +48,18 @@ public class BitcoinService {
 
     @Transactional(readOnly = true)
     public ResponseEntity findAddress(String address) {
-        return entityOrNotFound(addressRepository.getAddressByAddress(address));
+        Address addressNode = addressRepository.getAddressByAddress(address);
+        if (addressNode != null) {
+
+            addressNode.setOutputs(
+                    addressNode
+                            .getOutputs()
+                            .stream()
+                            .map(output -> this.findOutputNode(output.getOutputId()))
+                            .collect(Collectors.toList()));
+        }
+
+        return entityOrNotFound(addressNode);
     }
 
     @Transactional(readOnly = true)
@@ -60,7 +73,7 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity findOutput(String id) {
+    public Output findOutputNode(String id) {
         Output output = outputRepository.getOutputByOutputId(id);
 
         if (output != null) {
@@ -80,10 +93,13 @@ public class BitcoinService {
                 Transaction fullInputsTx = findTransactionModelById(inputsTx.getTransactionId());
                 inRelation.setTransaction(fullInputsTx);
             }
-
         }
+        return output;
+    }
 
-        return entityOrNotFound(output);
+    @Transactional(readOnly = true)
+    public ResponseEntity findOutput(String id) {
+        return entityOrNotFound(this.findOutputNode(id));
     }
 
     private <T> ResponseEntity entityOrNotFound(T result) {
