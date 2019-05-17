@@ -49,4 +49,8 @@ public class InputRelation {
         double eurExchangeRate = transaction.getMinedInBlock().getEur();
         return inputValue * eurExchangeRate;
     }
+
+    public double getTimestamp() {
+        return transaction.getMinedInBlock().getTimestamp();
+    }
 }

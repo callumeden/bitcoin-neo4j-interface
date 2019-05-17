@@ -49,4 +49,8 @@ public class OutputRelation {
     public void setTransaction(Transaction transaction) {
         this.transaction = transaction;
     }
+
+    public double getTimestamp() {
+        return transaction.getMinedInBlock().getTimestamp();
+    }
 }
