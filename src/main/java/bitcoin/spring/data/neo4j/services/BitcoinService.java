@@ -5,12 +5,13 @@ import bitcoin.spring.data.neo4j.domain.relationships.InputRelation;
 import bitcoin.spring.data.neo4j.domain.relationships.OutputRelation;
 import bitcoin.spring.data.neo4j.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class BitcoinService {
@@ -33,43 +34,45 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity findBlockByHash(String hash) {
-        return entityOrNotFound(blockRepository.findByHash(hash));
+    public Block findBlockByHash(String hash) {
+        return blockRepository.findByHash(hash);
     }
 
-    @Transactional(readOnly = true)
-    public ResponseEntity findTransactionById(String txid) {
-        return entityOrNotFound(findTransactionModelById(txid));
-    }
 
-    private Transaction findTransactionModelById(String txid) {
+    public Transaction findTransaction(String txid) {
         return transactionRepository.getTransactionByTransactionId(txid);
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity findAddress(String address) {
+    public Address findAddress(String address, Date start, Date end) {
         Address addressNode = addressRepository.getAddressByAddress(address);
-        if (addressNode != null) {
 
-            addressNode.setOutputs(
-                    addressNode
-                            .getOutputs()
-                            .stream()
-                            .map(output -> this.findOutputNode(output.getOutputId()))
-                            .collect(Collectors.toList()));
+        if (addressNode != null && addressNode.getOutputs() != null) {
+            Stream<Output> outputStream = addressNode.getOutputs()
+                    .stream();
+
+            if (start != null && end != null) {
+                outputStream = outputStream
+                        .map(output -> findOutputFilterByDate(output.getOutputId(), start, end))
+                        .filter(out -> checkTimestampInDateRange(out.getProducedByTransaction().getTimestamp(), start, end));
+            } else {
+                outputStream = outputStream.map(output -> this.findOutputNode(output.getOutputId()));
+            }
+
+            addressNode.setOutputs(outputStream.collect(Collectors.toList()));
         }
 
-        return entityOrNotFound(addressNode);
+        return addressNode;
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity findCoinbase(String coinbaseId) {
-        return entityOrNotFound(coinbaseRepository.getCoinbaseByCoinbaseId(coinbaseId));
+    public Coinbase findCoinbase(String coinbaseId) {
+        return coinbaseRepository.getCoinbaseByCoinbaseId(coinbaseId);
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity findEntity(String name) {
-        return entityOrNotFound(entityRepository.getEntityByName(name));
+    public Entity findEntity(String name) {
+        return entityRepository.getEntityByName(name);
     }
 
     @Transactional(readOnly = true)
@@ -83,29 +86,58 @@ public class BitcoinService {
 
             if (outRelation != null) {
                 Transaction producedByTx = outRelation.getTransaction();
-                Transaction fullProducedByTx = findTransactionModelById(producedByTx.getTransactionId());
+                Transaction fullProducedByTx = findTransaction(producedByTx.getTransactionId());
                 outRelation.setTransaction(fullProducedByTx);
             }
 
             InputRelation inRelation = output.getInputsTransaction();
             if (inRelation != null) {
                 Transaction inputsTx = inRelation.getTransaction();
-                Transaction fullInputsTx = findTransactionModelById(inputsTx.getTransactionId());
+                Transaction fullInputsTx = findTransaction(inputsTx.getTransactionId());
                 inRelation.setTransaction(fullInputsTx);
             }
         }
         return output;
     }
 
-    @Transactional(readOnly = true)
-    public ResponseEntity findOutput(String id) {
-        return entityOrNotFound(this.findOutputNode(id));
+    public Transaction findTransactionByIdFilterByDate(String txid, Date start, Date end) {
+        Transaction transactionNode = findTransaction(txid);
+
+        if (transactionNode != null && transactionNode.getOutputs() != null) {
+            transactionNode.setOutputs(transactionNode.getOutputs()
+                    .stream()
+                    .filter(output -> checkTimestampInDateRange(output.getTimestamp(), start, end))
+                    .collect(Collectors.toList()));
+        }
+
+        if (transactionNode != null && transactionNode.getInputs() != null) {
+            transactionNode.setInputs(transactionNode.getInputs()
+                    .stream()
+                    .filter(input -> checkTimestampInDateRange(input.getTimestamp(), start, end))
+                    .collect(Collectors.toList()));
+        }
+
+        return transactionNode;
     }
 
-    private <T> ResponseEntity entityOrNotFound(T result) {
-        return result == null ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("Could not find entity") :
-                new ResponseEntity<>(result, HttpStatus.OK);
+    public Output findOutputFilterByDate(String id, Date start, Date end) {
+        Output outputNode = findOutputNode(id);
+
+        if (outputNode != null && outputNode.getInputsTransaction() != null) {
+
+            long txTimestamp = outputNode.getInputsTransaction().getTimestamp();
+            if (!checkTimestampInDateRange(txTimestamp, start, end)) {
+                outputNode.setInputsTransaction(null);
+            }
+        }
+
+        return outputNode;
     }
 
+    private boolean checkTimestampInDateRange(long timestamp, Date start, Date end) {
+        Date producedAt = Date.from(Instant.ofEpochSecond(timestamp));
+
+        return producedAt.compareTo(start) >= 0 && end.compareTo(producedAt) >= 0;
+    }
 
 }

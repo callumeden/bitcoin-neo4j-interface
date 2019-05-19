@@ -49,4 +49,8 @@ public class Output {
     public InputRelation getInputsTransaction() {
         return inputsTransaction;
     }
+
+    public void setInputsTransaction(InputRelation inputsTransaction) {
+        this.inputsTransaction = inputsTransaction;
+    }
 }

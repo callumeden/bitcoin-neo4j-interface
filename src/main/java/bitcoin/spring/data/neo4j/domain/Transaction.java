@@ -54,4 +54,11 @@ public class Transaction {
         return outputs;
     }
 
+    public void setOutputs(List<OutputRelation> outputs) {
+        this.outputs = outputs;
+    }
+
+    public void setInputs(List<InputRelation> inputs) {
+        this.inputs = inputs;
+    }
 }

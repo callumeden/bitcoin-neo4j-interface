@@ -50,7 +50,7 @@ public class InputRelation {
         return inputValue * eurExchangeRate;
     }
 
-    public double getTimestamp() {
+    public long getTimestamp() {
         return transaction.getMinedInBlock().getTimestamp();
     }
 }

@@ -50,7 +50,7 @@ public class OutputRelation {
         this.transaction = transaction;
     }
 
-    public double getTimestamp() {
+    public long getTimestamp() {
         return transaction.getMinedInBlock().getTimestamp();
     }
 }
