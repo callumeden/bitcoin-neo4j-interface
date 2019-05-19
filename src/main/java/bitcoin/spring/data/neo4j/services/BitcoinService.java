@@ -44,7 +44,7 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public Address findAddress(String address, Date start, Date end) {
+    public Address findAddress(String address, Date start, Date end, String startPrice, String endPrice, String priceUnit) {
         Address addressNode = addressRepository.getAddressByAddress(address);
 
         if (addressNode != null && addressNode.getOutputs() != null) {
@@ -59,10 +59,33 @@ public class BitcoinService {
                 outputStream = outputStream.map(output -> this.findOutputNode(output.getOutputId()));
             }
 
+            if (startPrice != null && endPrice != null && priceUnit != null) {
+                outputStream = filterOutputStreamByPrice(outputStream, startPrice, endPrice, priceUnit);
+            }
+
             addressNode.setOutputs(outputStream.collect(Collectors.toList()));
         }
 
         return addressNode;
+    }
+
+    private Stream<Output> filterOutputStreamByPrice(Stream<Output> outputStream, String startPrice, String endPrice, String priceUnit) {
+        switch (priceUnit) {
+            case "btc":
+                return outputStream.filter(output -> isValueInRange(output.getValue(), startPrice, endPrice));
+            case "gbp":
+                return outputStream.filter(output -> isValueInRange(output.getProducedByTransaction().getGbpValue(), startPrice, endPrice));
+            case "usd":
+                return outputStream.filter(output -> isValueInRange(output.getProducedByTransaction().getUsdValue(), startPrice, endPrice));
+            case "eur":
+                return outputStream.filter(output -> isValueInRange(output.getProducedByTransaction().getEurValue(), startPrice, endPrice));
+        }
+
+        return null;
+    }
+
+    private boolean isValueInRange(double value, String start, String end) {
+        return value >= Double.valueOf(start) && value <= Double.valueOf(end);
     }
 
     @Transactional(readOnly = true)

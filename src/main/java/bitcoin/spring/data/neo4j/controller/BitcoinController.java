@@ -24,14 +24,20 @@ public class BitcoinController {
     @CrossOrigin
     public HttpEntity getAddress(@PathVariable("address") String address,
                                  @RequestParam(value = "startTime", required = false) String startTime,
-                                 @RequestParam(value = "endTime", required = false) String endTime) {
+                                 @RequestParam(value = "endTime", required = false) String endTime,
+                                 @RequestParam(value = "startPrice", required = false) String startPrice,
+                                 @RequestParam(value = "endPrice", required = false) String endPrice,
+                                 @RequestParam(value = "priceUnit", required = false) String priceUnit) {
+
+        Date startDate = null;
+        Date endDate = null;
+
         if (startTime != null && endTime != null) {
-            Date startDate = parseDateFromTimestamp(startTime);
-            Date endDate = parseDateFromTimestamp(endTime);
-            return entityOrNotFound(this.bitcoinService.findAddress(address, startDate, endDate));
+            startDate = parseDateFromTimestamp(startTime);
+            endDate = parseDateFromTimestamp(endTime);
         }
 
-        return entityOrNotFound(this.bitcoinService.findAddress(address, null, null));
+        return entityOrNotFound(this.bitcoinService.findAddress(address, startDate, endDate, startPrice, endPrice, priceUnit));
     }
 
     @GetMapping("/getBlock/{hash}")
