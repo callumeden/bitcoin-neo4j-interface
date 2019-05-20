@@ -38,7 +38,7 @@ public class Output {
     @Relationship(type = "INPUTS")
     private InputRelation inputsTransaction;
 
-    @JsonIgnoreProperties("outputs")
+    @JsonIgnoreProperties({"outputs", "inputHeuristicLinkedAddresses"})
     @Relationship(type = "LOCKED_TO")
     private Address lockedToAddress;
 
@@ -53,4 +53,9 @@ public class Output {
     public void setInputsTransaction(InputRelation inputsTransaction) {
         this.inputsTransaction = inputsTransaction;
     }
+
+    public void setLockedToAddress(Address lockedToAddress) {
+        this.lockedToAddress = lockedToAddress;
+    }
+
 }

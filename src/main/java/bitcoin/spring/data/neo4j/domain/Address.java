@@ -1,5 +1,6 @@
 package bitcoin.spring.data.neo4j.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
@@ -47,7 +48,7 @@ public class Address {
     @Relationship(type = "HAS_ENTITY")
     private Entity entity;
 
-    @JsonIgnoreProperties("inputHeuristicLinkedAddresses")
+    @JsonIgnoreProperties({"inputHeuristicLinkedAddresses"})
     @Relationship(type = "INPUT_HEURISTIC_LINKED_ADDRESSES", direction = Relationship.UNDIRECTED)
     private Set<Address> inputHeuristicLinkedAddresses;
 
@@ -62,5 +63,19 @@ public class Address {
         }
 
         this.inputHeuristicLinkedAddresses.add(linkedAddress);
+    }
+
+    public void setInputHeuristicLinkedAddresses(Set<Address> inputHeuristicLinkedAddresses) {
+        this.inputHeuristicLinkedAddresses = inputHeuristicLinkedAddresses;
+    }
+
+    private boolean hasLinkedAddresses;
+
+    public boolean isHasLinkedAddresses() {
+        return hasLinkedAddresses;
+    }
+
+    public void setHasLinkedAddresses(boolean hasLinkedAddresses) {
+        this.hasLinkedAddresses = hasLinkedAddresses;
     }
 }

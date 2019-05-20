@@ -44,12 +44,16 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public Address findAddress(String address, Date start, Date end, String startPrice, String endPrice, String priceUnit) {
+    public Address findAddress(String address, boolean inputClustering, Date start, Date end, String startPrice, String endPrice, String priceUnit) {
         Address addressNode = addressRepository.getAddressByAddress(address);
         boolean hasDateFilter = start != null && end != null;
         boolean hasPriceFilter = startPrice != null && endPrice != null && priceUnit != null;
 
-        if (addressNode != null && addressNode.getOutputs() != null) {
+        if (addressNode == null) {
+            return null;
+        }
+
+        if (addressNode.getOutputs() != null) {
             Stream<Output> outputStream = addressNode.getOutputs()
                     .stream();
 
@@ -65,6 +69,16 @@ public class BitcoinService {
             }
 
             addressNode.setOutputs(outputStream.collect(Collectors.toList()));
+        }
+
+        if (inputClustering && addressNode.getInputHeuristicLinkedAddresses() != null) {
+            Stream<Address> linkedAddressStream =  addressNode.getInputHeuristicLinkedAddresses().stream();
+
+            linkedAddressStream = linkedAddressStream
+                    .map(linkedAddressNode ->
+                            this.findAddress(linkedAddressNode.getAddress(), false, start, end, startPrice, endPrice, priceUnit));
+
+            addressNode.setInputHeuristicLinkedAddresses(linkedAddressStream.collect(Collectors.toSet()));
         }
 
         return addressNode;
@@ -157,7 +171,14 @@ public class BitcoinService {
                 if (hasDateFilter && !checkTimestampInDateRange(txTimestamp, startDate, endDate)) {
                     outputNode.setInputsTransaction(null);
                 }
+            }
 
+            if (outputNode.getLockedToAddress() != null) {
+                Address populatedAddress = addressRepository.getAddressByAddress(outputNode.getLockedToAddress().getAddress());
+                if (populatedAddress.getInputHeuristicLinkedAddresses() != null) {
+                    populatedAddress.setHasLinkedAddresses(populatedAddress.getInputHeuristicLinkedAddresses().size() > 0);
+                }
+                outputNode.setLockedToAddress(populatedAddress);
             }
         }
         return outputNode;
@@ -213,7 +234,6 @@ public class BitcoinService {
 
     private boolean checkTimestampInDateRange(long timestamp, Date start, Date end) {
         Date producedAt = Date.from(Instant.ofEpochSecond(timestamp));
-
         return producedAt.compareTo(start) >= 0 && end.compareTo(producedAt) >= 0;
     }
 

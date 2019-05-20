@@ -27,7 +27,8 @@ public class BitcoinController {
                                  @RequestParam(value = "endTime", required = false) String endTime,
                                  @RequestParam(value = "startPrice", required = false) String startPrice,
                                  @RequestParam(value = "endPrice", required = false) String endPrice,
-                                 @RequestParam(value = "priceUnit", required = false) String priceUnit) {
+                                 @RequestParam(value = "priceUnit", required = false) String priceUnit,
+                                 @RequestParam(value="inputClustering", required = false) boolean inputClustering) {
 
         Date startDate = null;
         Date endDate = null;
@@ -37,7 +38,7 @@ public class BitcoinController {
             endDate = parseDateFromTimestamp(endTime);
         }
 
-        return entityOrNotFound(this.bitcoinService.findAddress(address, startDate, endDate, startPrice, endPrice, priceUnit));
+        return entityOrNotFound(this.bitcoinService.findAddress(address, inputClustering, startDate, endDate, startPrice, endPrice, priceUnit));
     }
 
     @GetMapping("/getBlock/{hash}")
