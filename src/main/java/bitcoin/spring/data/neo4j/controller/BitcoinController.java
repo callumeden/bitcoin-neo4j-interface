@@ -82,14 +82,21 @@ public class BitcoinController {
     @CrossOrigin
     public HttpEntity getTransaction(@PathVariable("txid") String txid,
                                      @RequestParam(value = "startTime", required = false) String startTime,
-                                     @RequestParam(value = "endTime", required = false) String endTime) {
+                                     @RequestParam(value = "endTime", required = false) String endTime,
+                                     @RequestParam(value="startPrice", required = false) String startPrice,
+                                     @RequestParam(value="endPrice", required = false) String endPrice,
+                                     @RequestParam(value = "priceUnit", required = false) String priceUnit) {
+
+        Date filterStartTime = null;
+        Date filterEndTime = null;
 
         if (startTime != null && endTime != null) {
-            Date startDate = parseDateFromTimestamp(startTime);
-            Date endDate = parseDateFromTimestamp(endTime);
-            return entityOrNotFound(this.bitcoinService.findTransactionByIdFilterByDate(txid, startDate, endDate));
+            filterStartTime = parseDateFromTimestamp(startTime);
+            filterEndTime = parseDateFromTimestamp(endTime);
         }
-        return entityOrNotFound(this.bitcoinService.findTransaction(txid));
+
+
+        return entityOrNotFound(this.bitcoinService.findTransaction(txid, filterStartTime, filterEndTime, startPrice, endPrice, priceUnit));
     }
 
     private Date parseDateFromTimestamp(String timestamp) {
