@@ -46,20 +46,21 @@ public class BitcoinService {
     @Transactional(readOnly = true)
     public Address findAddress(String address, Date start, Date end, String startPrice, String endPrice, String priceUnit) {
         Address addressNode = addressRepository.getAddressByAddress(address);
+        boolean hasDateFilter = start != null && end != null;
+        boolean hasPriceFilter = startPrice != null && endPrice != null && priceUnit != null;
 
         if (addressNode != null && addressNode.getOutputs() != null) {
             Stream<Output> outputStream = addressNode.getOutputs()
                     .stream();
 
-            if (start != null && end != null) {
+            outputStream = outputStream.map(output -> this.findOutputNode(output.getOutputId(), start, end));
+
+            if (hasDateFilter) {
                 outputStream = outputStream
-                        .map(output -> findOutputFilterByDate(output.getOutputId(), start, end))
                         .filter(out -> checkTimestampInDateRange(out.getProducedByTransaction().getTimestamp(), start, end));
-            } else {
-                outputStream = outputStream.map(output -> this.findOutputNode(output.getOutputId()));
             }
 
-            if (startPrice != null && endPrice != null && priceUnit != null) {
+            if (hasPriceFilter) {
                 outputStream = filterOutputStreamByPrice(outputStream, startPrice, endPrice, priceUnit);
             }
 
@@ -129,13 +130,14 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public Output findOutputNode(String id) {
-        Output output = outputRepository.getOutputByOutputId(id);
+    public Output findOutputNode(String id, Date startDate, Date endDate) {
+        Output outputNode = outputRepository.getOutputByOutputId(id);
+        boolean hasDateFilter = startDate != null && endDate != null;
 
-        if (output != null) {
+        if (outputNode != null) {
             //This makes the output relation have a full transaction in its relation, so it contains its block
             //to fetch the exchange rates from
-            OutputRelation outRelation = output.getProducedByTransaction();
+            OutputRelation outRelation = outputNode.getProducedByTransaction();
 
             if (outRelation != null) {
                 Transaction producedByTx = outRelation.getTransaction();
@@ -143,14 +145,22 @@ public class BitcoinService {
                 outRelation.setTransaction(fullProducedByTx);
             }
 
-            InputRelation inRelation = output.getInputsTransaction();
+            InputRelation inRelation = outputNode.getInputsTransaction();
             if (inRelation != null) {
+
                 Transaction inputsTx = inRelation.getTransaction();
                 Transaction fullInputsTx = findTransaction(inputsTx.getTransactionId());
                 inRelation.setTransaction(fullInputsTx);
+
+                long txTimestamp = inRelation.getTimestamp();
+
+                if (hasDateFilter && !checkTimestampInDateRange(txTimestamp, startDate, endDate)) {
+                    outputNode.setInputsTransaction(null);
+                }
+
             }
         }
-        return output;
+        return outputNode;
     }
 
     public Transaction findTransaction(String txid, Date startDate, Date endDate, String startPrice, String endPrice, String priceUnit) {
@@ -200,19 +210,6 @@ public class BitcoinService {
         return transactionNode;
     }
 
-    public Output findOutputFilterByDate(String id, Date start, Date end) {
-        Output outputNode = findOutputNode(id);
-
-        if (outputNode != null && outputNode.getInputsTransaction() != null) {
-
-            long txTimestamp = outputNode.getInputsTransaction().getTimestamp();
-            if (!checkTimestampInDateRange(txTimestamp, start, end)) {
-                outputNode.setInputsTransaction(null);
-            }
-        }
-
-        return outputNode;
-    }
 
     private boolean checkTimestampInDateRange(long timestamp, Date start, Date end) {
         Date producedAt = Date.from(Instant.ofEpochSecond(timestamp));

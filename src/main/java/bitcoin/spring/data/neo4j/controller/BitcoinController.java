@@ -69,13 +69,16 @@ public class BitcoinController {
                                 @RequestParam(value = "startTime", required = false) String startTime,
                                 @RequestParam(value = "endTime", required = false) String endTime) {
 
+        Date startDate = null;
+        Date endDate = null;
+
         if (startTime != null && endTime != null) {
-            Date startDate = parseDateFromTimestamp(startTime);
-            Date endDate = parseDateFromTimestamp(endTime);
-            return entityOrNotFound(this.bitcoinService.findOutputFilterByDate(id, startDate, endDate));
+            startDate = parseDateFromTimestamp(startTime);
+            endDate = parseDateFromTimestamp(endTime);
         }
 
-        return entityOrNotFound(this.bitcoinService.findOutputNode(id));
+
+        return entityOrNotFound(this.bitcoinService.findOutputNode(id, startDate, endDate));
     }
 
     @GetMapping("/getTransaction/{txid}")
