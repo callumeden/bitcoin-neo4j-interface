@@ -140,7 +140,14 @@ public class BitcoinService {
 
     @Transactional(readOnly = true)
     public Entity findEntity(String name) {
-        return entityRepository.getEntityByName(name);
+        Entity entityNode = entityRepository.getEntityByName(name);
+
+        entityNode.setUserAddresses(entityNode.getUsesAddresses()
+                .stream()
+                .map(address -> addressRepository.getAddressByAddress(address.getAddress()))
+                .collect(Collectors.toList()));
+
+        return entityNode;
     }
 
     @Transactional(readOnly = true)

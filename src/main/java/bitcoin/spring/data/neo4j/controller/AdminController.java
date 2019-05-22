@@ -20,4 +20,9 @@ public class AdminController {
     public HttpEntity clusterByInput() {
         return clusteringService.clusterByInput();
     }
+
+    @GetMapping("/deleteClustering")
+    public HttpEntity deleteClustering() {
+        return clusteringService.deleteClustering();
+    }
 }

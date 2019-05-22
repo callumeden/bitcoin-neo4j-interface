@@ -28,4 +28,8 @@ public class Entity {
     public List<Address> getUsesAddresses() {
         return usesAddresses;
     }
+
+    public void setUserAddresses(List<Address> fullAddresses) {
+        this.usesAddresses = fullAddresses;
+    }
 }

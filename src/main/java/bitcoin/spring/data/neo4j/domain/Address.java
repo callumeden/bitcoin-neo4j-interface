@@ -45,6 +45,7 @@ public class Address {
     private List<Output> outputs;
 
 
+    @JsonIgnoreProperties("usesAddresses")
     @Relationship(type = "HAS_ENTITY")
     private Entity entity;
 
@@ -66,6 +67,11 @@ public class Address {
     }
 
     public void setInputHeuristicLinkedAddresses(Set<Address> inputHeuristicLinkedAddresses) {
+        if (this.inputHeuristicLinkedAddresses != null) {
+            this.inputHeuristicLinkedAddresses.addAll(inputHeuristicLinkedAddresses);
+            return;
+        }
+
         this.inputHeuristicLinkedAddresses = inputHeuristicLinkedAddresses;
     }
 
