@@ -50,20 +50,10 @@ public class Address {
     private Entity entity;
 
     @JsonIgnoreProperties({"inputHeuristicLinkedAddresses"})
-    @Relationship(type = "INPUT_HEURISTIC_LINKED_ADDRESSES", direction = Relationship.UNDIRECTED)
     private Set<Address> inputHeuristicLinkedAddresses;
-
 
     public Set<Address> getInputHeuristicLinkedAddresses() {
         return inputHeuristicLinkedAddresses;
-    }
-
-    public void addInputHeuristicLinkedAddresses(Address linkedAddress) {
-        if (this.inputHeuristicLinkedAddresses == null) {
-            this.inputHeuristicLinkedAddresses = new HashSet<>();
-        }
-
-        this.inputHeuristicLinkedAddresses.add(linkedAddress);
     }
 
     public void setInputHeuristicLinkedAddresses(Set<Address> inputHeuristicLinkedAddresses) {

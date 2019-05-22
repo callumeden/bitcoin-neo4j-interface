@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,17 +74,71 @@ public class BitcoinService {
             addressNode.setOutputs(outputStream.collect(Collectors.toList()));
         }
 
-        if (inputClustering && addressNode.getInputHeuristicLinkedAddresses() != null) {
-            Stream<Address> linkedAddressStream =  addressNode.getInputHeuristicLinkedAddresses().stream();
-
-            linkedAddressStream = linkedAddressStream
-                    .map(linkedAddressNode ->
-                            this.findAddress(linkedAddressNode.getAddress(), false, start, end, startPrice, endPrice, priceUnit));
-
-            addressNode.setInputHeuristicLinkedAddresses(linkedAddressStream.collect(Collectors.toSet()));
+        if (inputClustering) {
+            performInputClustering(addressNode, start, end);
         }
 
+//        if (inputClustering && addressNode.getInputHeuristicLinkedAddresses() != null) {
+//            Stream<Address> linkedAddressStream =  addressNode.getInputHeuristicLinkedAddresses().stream();
+//
+//            linkedAddressStream = linkedAddressStream
+//                    .map(linkedAddressNode ->
+//                            this.findAddress(linkedAddressNode.getAddress(), false, start, end, startPrice, endPrice, priceUnit));
+//
+//            addressNode.setInputHeuristicLinkedAddresses(linkedAddressStream.collect(Collectors.toSet()));
+//        }
+
         return addressNode;
+    }
+
+    private void performInputClustering(Address addressNode, Date start, Date end) {
+        Set<Address> linkedAddresses = transitiveInputClustering(addressNode, new HashSet<>(), start, end);
+        addressNode.setInputHeuristicLinkedAddresses(linkedAddresses);
+    }
+
+    private Set<Address> transitiveInputClustering(Address addressNode, Set<Transaction> exploredTransactions, Date startFilter, Date endFilter) {
+        //a stream of transactions which all have inputs locked to this address
+        Stream<Transaction> allTransactionsThisAddressInputs = getTransactionsForAddress(addressNode, startFilter, endFilter);
+        HashSet<Transaction> thisAddressesTransactions = allTransactionsThisAddressInputs.collect(Collectors.toCollection(HashSet::new));
+
+        //removes all transactions we've already seen
+        thisAddressesTransactions.removeAll(exploredTransactions);
+
+        //now adds the new transactions we're about to explore to the explored set
+        exploredTransactions.addAll(thisAddressesTransactions);
+
+        //all addresses linked directly (1 transaction hop away) from this address
+        Stream<Address> linkedAddressesStream = getAddressesLinkedByTransactions(thisAddressesTransactions.parallelStream(), startFilter, endFilter);
+        Set<Address> directlyLinkedAddresses = linkedAddressesStream.collect(Collectors.toSet());
+
+        //all addresses linked transitively (2 transaction hops away) from this address
+        Stream<Set<Address>> transitiveAddressStream = directlyLinkedAddresses
+                .stream()
+                .map(linkedAddress -> transitiveInputClustering(linkedAddress, exploredTransactions, startFilter, endFilter));
+        directlyLinkedAddresses.addAll(transitiveAddressStream.flatMap(Set::stream).collect(Collectors.toSet()));
+
+        return directlyLinkedAddresses;
+    }
+
+    private Stream<Transaction> getTransactionsForAddress(Address address, Date startFilter, Date endFilter) {
+        return address.getOutputs()
+                .parallelStream()
+                .map(outputShell -> findOutputNode(outputShell.getOutputId(), startFilter, endFilter))
+                .filter(outputNode -> outputNode.getInputsTransaction() != null)
+                .map(outputNode -> outputNode.getInputsTransaction().getTransaction())
+                .map(transactionShell -> findTransaction(transactionShell.getTransactionId()))
+                .filter(transactionNode -> transactionNode.getInputs() != null && transactionNode.getInputs().size() > 1);
+    }
+
+    private Stream<Address> getAddressesLinkedByTransactions(Stream<Transaction> transactionStream, Date startFilter, Date endFilter) {
+        return transactionStream.flatMap(tx -> getAddressesLinkedByTransaction(tx, startFilter, endFilter));
+    }
+    private Stream<Address> getAddressesLinkedByTransaction(Transaction transaction, Date start, Date end) {
+        return transaction.getInputs()
+                .parallelStream()
+                .map(InputRelation::getInput)
+                .map(inputShell -> findOutputNode(inputShell.getOutputId(), start, end))
+                .map(Output::getLockedToAddress);
     }
 
     private Stream<Output> filterOutputStreamByPrice(Stream<Output> outputStream, String startPrice, String endPrice, String priceUnit) {
