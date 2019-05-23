@@ -78,19 +78,24 @@ public class BitcoinService {
         }
 
         if (inputClustering && addressNode.getEntity() == null) {
-            performInputClustering(addressNode, start, end);
+            performInputClustering(addressNode, start, end, nodeLimit);
         }
 
         return addressNode;
     }
 
-    private void performInputClustering(Address addressNode, Date start, Date end) {
-        Set<Address> linkedAddresses = transitiveInputClustering(addressNode, new HashSet<>(), start, end);
+    private void performInputClustering(Address addressNode, Date start, Date end, Integer nodeLimit) {
+        Set<Address> linkedAddresses = transitiveInputClustering(addressNode, new HashSet<>(), start, end, nodeLimit);
         addressNode.setInputHeuristicLinkedAddresses(linkedAddresses);
     }
 
-    private Set<Address> transitiveInputClustering(Address addressNode, Set<Transaction> exploredTransactions, Date startFilter, Date endFilter) {
+    private Set<Address> transitiveInputClustering(Address addressNode, Set<Transaction> exploredTransactions, Date startFilter, Date endFilter, Integer nodeLimit) {
         //a stream of transactions which all have inputs locked to this address
+
+        if (nodeLimit != null && exploredTransactions.size() > nodeLimit) {
+            return new HashSet<>();
+        }
+
         Stream<Transaction> allTransactionsThisAddressInputs = getTransactionsForAddress(addressNode, startFilter, endFilter);
         HashSet<Transaction> thisAddressesTransactions = allTransactionsThisAddressInputs.collect(Collectors.toCollection(HashSet::new));
 
@@ -107,7 +112,7 @@ public class BitcoinService {
         //all addresses linked transitively (2 transaction hops away) from this address
         Stream<Set<Address>> transitiveAddressStream = directlyLinkedAddresses
                 .stream()
-                .map(linkedAddress -> transitiveInputClustering(linkedAddress, exploredTransactions, startFilter, endFilter));
+                .map(linkedAddress -> transitiveInputClustering(linkedAddress, exploredTransactions, startFilter, endFilter, nodeLimit));
         directlyLinkedAddresses.addAll(transitiveAddressStream.flatMap(Set::stream).collect(Collectors.toSet()));
 
         return directlyLinkedAddresses;
