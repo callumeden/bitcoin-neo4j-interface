@@ -129,9 +129,9 @@ public class BitcoinService {
         Stream<Output> outputStream = address.getOutputs()
                 .parallelStream();
 
-//        if (nodeLimit != null) {
-//            outputStream = outputStream.limit(nodeLimit);
-//        }
+        if (nodeLimit != null) {
+            outputStream = outputStream.limit(nodeLimit);
+        }
 
         return outputStream.map(outputShell -> findOutputNode(outputShell.getOutputId(), startFilter, endFilter))
                 .filter(outputNode -> outputNode.getInputsTransaction() != null)
@@ -148,9 +148,9 @@ public class BitcoinService {
         Stream<InputRelation> inputStream = transaction.getInputs()
                 .parallelStream();
 
-//        if (nodeLimit != null) {
-//            inputStream = inputStream.limit(nodeLimit);
-//        }
+        if (nodeLimit != null) {
+            inputStream = inputStream.limit(nodeLimit);
+        }
 
         return inputStream.map(InputRelation::getInput)
                 .map(inputShell -> findOutputNode(inputShell.getOutputId(), start, end))
