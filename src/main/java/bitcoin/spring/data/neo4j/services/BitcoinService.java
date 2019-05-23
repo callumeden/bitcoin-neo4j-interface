@@ -45,8 +45,7 @@ public class BitcoinService {
         return transactionRepository.getTransactionByTransactionId(txid);
     }
 
-    @Transactional(readOnly = true)
-    public Address findAddress(String address, boolean inputClustering, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
+    private Address findAddress(String address, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
         Address addressNode = addressRepository.getAddressByAddress(address);
         boolean hasDateFilter = start != null && end != null;
         boolean hasPriceFilter = startPrice != null && endPrice != null && priceUnit != null;
@@ -76,6 +75,12 @@ public class BitcoinService {
 
             addressNode.setOutputs(outputStream.collect(Collectors.toList()));
         }
+        return addressNode;
+    }
+
+    @Transactional(readOnly = true)
+    public Address findAddress(String address, boolean inputClustering, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
+        Address addressNode = findAddress(address, start, end, startPrice, endPrice, priceUnit, nodeLimit);
 
         if (inputClustering && addressNode.getEntity() == null) {
             performInputClustering(addressNode, start, end, nodeLimit);
@@ -205,7 +210,7 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public Entity findEntity(String name, Integer nodeLimit) {
+    public Entity findEntity(String name, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
         Entity entityNode = entityRepository.getEntityByName(name);
 
         Stream<Address> linkedAddressStream = entityNode.getUsesAddresses()
@@ -215,7 +220,7 @@ public class BitcoinService {
             linkedAddressStream = linkedAddressStream.limit(nodeLimit);
         }
 
-        linkedAddressStream = linkedAddressStream.map(address -> addressRepository.getAddressByAddress(address.getAddress()));
+        linkedAddressStream = linkedAddressStream.map(address -> findAddress(address.getAddress(), start, end, startPrice, endPrice, priceUnit, nodeLimit));
 
         entityNode.setUserAddresses(linkedAddressStream.collect(Collectors.toList()));
 

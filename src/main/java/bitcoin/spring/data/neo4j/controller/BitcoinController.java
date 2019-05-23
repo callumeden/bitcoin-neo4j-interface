@@ -23,23 +23,25 @@ public class BitcoinController {
     @GetMapping("/getAddress/{address}")
     @CrossOrigin
     public HttpEntity getAddress(@PathVariable("address") String address,
-                                 @RequestParam(value = "startTime", required = false) String startTime,
-                                 @RequestParam(value = "endTime", required = false) String endTime,
+                                 @RequestParam(value = "startTime", required = false) String startDateString,
+                                 @RequestParam(value = "endTime", required = false) String endDateString,
                                  @RequestParam(value = "startPrice", required = false) String startPrice,
                                  @RequestParam(value = "endPrice", required = false) String endPrice,
                                  @RequestParam(value = "priceUnit", required = false) String priceUnit,
                                  @RequestParam(value="inputClustering", required = false) boolean inputClustering,
                                  @RequestParam(value = "nodeLimit", required = false) Integer nodeLimit) {
 
-        Date startDate = null;
-        Date endDate = null;
-
-        if (startTime != null && endTime != null) {
-            startDate = parseDateFromTimestamp(startTime);
-            endDate = parseDateFromTimestamp(endTime);
-        }
+        Date startDate = parseDate(startDateString);
+        Date endDate = parseDate(endDateString);
 
         return entityOrNotFound(this.bitcoinService.findAddress(address, inputClustering, startDate, endDate, startPrice, endPrice, priceUnit, nodeLimit));
+    }
+
+    private Date parseDate(String dateString) {
+        if (dateString != null) {
+            return parseDateFromTimestamp(dateString);
+        }
+        return null;
     }
 
     @GetMapping("/getBlock/{hash}")
@@ -57,8 +59,15 @@ public class BitcoinController {
     @GetMapping("/getEntity/{name}")
     @CrossOrigin
     public HttpEntity getEntity(@PathVariable("name") String name,
+                                @RequestParam(value = "startTime", required = false) String startDateString,
+                                @RequestParam(value = "endTime", required = false) String endDateString,
+                                @RequestParam(value = "startPrice", required = false) String startPrice,
+                                @RequestParam(value = "endPrice", required = false) String endPrice,
+                                @RequestParam(value = "priceUnit", required = false) String priceUnit,
                                 @RequestParam(value = "nodeLimit", required = false) Integer nodeLimit) {
-        return entityOrNotFound(this.bitcoinService.findEntity(name, nodeLimit));
+        Date startDate = parseDate(startDateString);
+        Date endDate = parseDate(endDateString);
+        return entityOrNotFound(this.bitcoinService.findEntity(name, startDate, endDate, startPrice, endPrice, priceUnit, nodeLimit));
     }
 
     private <T> ResponseEntity entityOrNotFound(T result) {
@@ -72,14 +81,8 @@ public class BitcoinController {
                                 @RequestParam(value = "startTime", required = false) String startTime,
                                 @RequestParam(value = "endTime", required = false) String endTime) {
 
-        Date startDate = null;
-        Date endDate = null;
-
-        if (startTime != null && endTime != null) {
-            startDate = parseDateFromTimestamp(startTime);
-            endDate = parseDateFromTimestamp(endTime);
-        }
-
+        Date startDate = parseDate(startTime);
+        Date endDate = parseDate(endTime);
 
         return entityOrNotFound(this.bitcoinService.findOutputNode(id, startDate, endDate));
     }
@@ -94,14 +97,8 @@ public class BitcoinController {
                                      @RequestParam(value = "priceUnit", required = false) String priceUnit,
                                      @RequestParam(value = "nodeLimit", required = false) Integer nodeLimit) {
 
-        Date filterStartTime = null;
-        Date filterEndTime = null;
-
-        if (startTime != null && endTime != null) {
-            filterStartTime = parseDateFromTimestamp(startTime);
-            filterEndTime = parseDateFromTimestamp(endTime);
-        }
-
+        Date filterStartTime = parseDate(startTime);
+        Date filterEndTime = parseDate(endTime);
 
         return entityOrNotFound(this.bitcoinService.findTransaction(txid, filterStartTime, filterEndTime, startPrice, endPrice, priceUnit, nodeLimit));
     }
