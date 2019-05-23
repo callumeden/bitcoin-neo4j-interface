@@ -74,19 +74,9 @@ public class BitcoinService {
             addressNode.setOutputs(outputStream.collect(Collectors.toList()));
         }
 
-        if (inputClustering) {
+        if (inputClustering && addressNode.getEntity() == null) {
             performInputClustering(addressNode, start, end);
         }
-
-//        if (inputClustering && addressNode.getInputHeuristicLinkedAddresses() != null) {
-//            Stream<Address> linkedAddressStream =  addressNode.getInputHeuristicLinkedAddresses().stream();
-//
-//            linkedAddressStream = linkedAddressStream
-//                    .map(linkedAddressNode ->
-//                            this.findAddress(linkedAddressNode.getAddress(), false, start, end, startPrice, endPrice, priceUnit));
-//
-//            addressNode.setInputHeuristicLinkedAddresses(linkedAddressStream.collect(Collectors.toSet()));
-//        }
 
         return addressNode;
     }
@@ -238,6 +228,7 @@ public class BitcoinService {
             }
 
             if (outputNode.getLockedToAddress() != null) {
+                //todo - this no longer works
                 Address populatedAddress = addressRepository.getAddressByAddress(outputNode.getLockedToAddress().getAddress());
                 if (populatedAddress.getInputHeuristicLinkedAddresses() != null) {
                     populatedAddress.setHasLinkedAddresses(populatedAddress.getInputHeuristicLinkedAddresses().size() > 0);
