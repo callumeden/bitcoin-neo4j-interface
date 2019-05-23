@@ -84,7 +84,7 @@ public class BitcoinController {
         Date startDate = parseDate(startTime);
         Date endDate = parseDate(endTime);
 
-        return entityOrNotFound(this.bitcoinService.findOutputNode(id, startDate, endDate));
+        return entityOrNotFound(this.bitcoinService.findOutputNodeCheckIfCanCluster(id, startDate, endDate));
     }
 
     @GetMapping("/getTransaction/{txid}")

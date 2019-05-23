@@ -59,6 +59,7 @@ public class BitcoinService {
                     .parallelStream();
 
             if (nodeLimit != null) {
+                System.out.println("ADDRESS TRUNCATING ...........................................");
                 outputStream = outputStream.limit(nodeLimit);
             }
 
@@ -89,9 +90,10 @@ public class BitcoinService {
         return addressNode;
     }
 
-    private void performInputClustering(Address addressNode, Date start, Date end, Integer nodeLimit) {
+    private Set<Address> performInputClustering(Address addressNode, Date start, Date end, Integer nodeLimit) {
         Set<Address> linkedAddresses = transitiveInputClustering(addressNode, new HashSet<>(), start, end, nodeLimit);
         addressNode.setInputHeuristicLinkedAddresses(linkedAddresses);
+        return linkedAddresses;
     }
 
     private Set<Address> transitiveInputClustering(Address addressNode, Set<Transaction> exploredTransactions, Date startFilter, Date endFilter, Integer nodeLimit) {
@@ -227,6 +229,17 @@ public class BitcoinService {
         return entityNode;
     }
 
+    public Output findOutputNodeCheckIfCanCluster(String id, Date startDate, Date endDate) {
+        Output outputNode = findOutputNode(id, startDate, endDate);
+
+        if (outputNode.getLockedToAddress() != null) {
+            Address addressNode = outputNode.getLockedToAddress();
+            Set<Address> clusteredAddresses = performInputClustering(addressNode, startDate, endDate, 1);
+            addressNode.setHasLinkedAddresses(clusteredAddresses.size() > 0);
+        }
+
+        return outputNode;
+    }
     @Transactional(readOnly = true)
     public Output findOutputNode(String id, Date startDate, Date endDate) {
         Output outputNode = outputRepository.getOutputByOutputId(id);
@@ -258,11 +271,7 @@ public class BitcoinService {
             }
 
             if (outputNode.getLockedToAddress() != null) {
-                //todo - this no longer works
                 Address populatedAddress = addressRepository.getAddressByAddress(outputNode.getLockedToAddress().getAddress());
-                if (populatedAddress.getInputHeuristicLinkedAddresses() != null) {
-                    populatedAddress.setHasLinkedAddresses(populatedAddress.getInputHeuristicLinkedAddresses().size() > 0);
-                }
                 outputNode.setLockedToAddress(populatedAddress);
             }
         }
