@@ -28,7 +28,8 @@ public class BitcoinController {
                                  @RequestParam(value = "startPrice", required = false) String startPrice,
                                  @RequestParam(value = "endPrice", required = false) String endPrice,
                                  @RequestParam(value = "priceUnit", required = false) String priceUnit,
-                                 @RequestParam(value="inputClustering", required = false) boolean inputClustering) {
+                                 @RequestParam(value="inputClustering", required = false) boolean inputClustering,
+                                 @RequestParam(value = "nodeLimit", required = false) Integer nodeLimit) {
 
         Date startDate = null;
         Date endDate = null;
@@ -38,7 +39,7 @@ public class BitcoinController {
             endDate = parseDateFromTimestamp(endTime);
         }
 
-        return entityOrNotFound(this.bitcoinService.findAddress(address, inputClustering, startDate, endDate, startPrice, endPrice, priceUnit));
+        return entityOrNotFound(this.bitcoinService.findAddress(address, inputClustering, startDate, endDate, startPrice, endPrice, priceUnit, nodeLimit));
     }
 
     @GetMapping("/getBlock/{hash}")
@@ -55,8 +56,9 @@ public class BitcoinController {
 
     @GetMapping("/getEntity/{name}")
     @CrossOrigin
-    public HttpEntity getEntity(@PathVariable("name") String name) {
-        return entityOrNotFound(this.bitcoinService.findEntity(name));
+    public HttpEntity getEntity(@PathVariable("name") String name,
+                                @RequestParam(value = "nodeLimit", required = false) Integer nodeLimit) {
+        return entityOrNotFound(this.bitcoinService.findEntity(name, nodeLimit));
     }
 
     private <T> ResponseEntity entityOrNotFound(T result) {
@@ -89,7 +91,8 @@ public class BitcoinController {
                                      @RequestParam(value = "endTime", required = false) String endTime,
                                      @RequestParam(value="startPrice", required = false) String startPrice,
                                      @RequestParam(value="endPrice", required = false) String endPrice,
-                                     @RequestParam(value = "priceUnit", required = false) String priceUnit) {
+                                     @RequestParam(value = "priceUnit", required = false) String priceUnit,
+                                     @RequestParam(value = "nodeLimit", required = false) Integer nodeLimit) {
 
         Date filterStartTime = null;
         Date filterEndTime = null;
@@ -100,7 +103,7 @@ public class BitcoinController {
         }
 
 
-        return entityOrNotFound(this.bitcoinService.findTransaction(txid, filterStartTime, filterEndTime, startPrice, endPrice, priceUnit));
+        return entityOrNotFound(this.bitcoinService.findTransaction(txid, filterStartTime, filterEndTime, startPrice, endPrice, priceUnit, nodeLimit));
     }
 
     private Date parseDateFromTimestamp(String timestamp) {

@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,7 +46,7 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public Address findAddress(String address, boolean inputClustering, Date start, Date end, String startPrice, String endPrice, String priceUnit) {
+    public Address findAddress(String address, boolean inputClustering, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
         Address addressNode = addressRepository.getAddressByAddress(address);
         boolean hasDateFilter = start != null && end != null;
         boolean hasPriceFilter = startPrice != null && endPrice != null && priceUnit != null;
@@ -58,7 +57,11 @@ public class BitcoinService {
 
         if (addressNode.getOutputs() != null) {
             Stream<Output> outputStream = addressNode.getOutputs()
-                    .stream();
+                    .parallelStream();
+
+            if (nodeLimit != null) {
+                outputStream = outputStream.limit(nodeLimit);
+            }
 
             outputStream = outputStream.map(output -> this.findOutputNode(output.getOutputId(), start, end));
 
@@ -123,6 +126,7 @@ public class BitcoinService {
     private Stream<Address> getAddressesLinkedByTransactions(Stream<Transaction> transactionStream, Date startFilter, Date endFilter) {
         return transactionStream.flatMap(tx -> getAddressesLinkedByTransaction(tx, startFilter, endFilter));
     }
+
     private Stream<Address> getAddressesLinkedByTransaction(Transaction transaction, Date start, Date end) {
         return transaction.getInputs()
                 .parallelStream()
@@ -186,13 +190,19 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public Entity findEntity(String name) {
+    public Entity findEntity(String name, Integer nodeLimit) {
         Entity entityNode = entityRepository.getEntityByName(name);
 
-        entityNode.setUserAddresses(entityNode.getUsesAddresses()
-                .stream()
-                .map(address -> addressRepository.getAddressByAddress(address.getAddress()))
-                .collect(Collectors.toList()));
+        Stream<Address> linkedAddressStream = entityNode.getUsesAddresses()
+                .parallelStream();
+
+        if (nodeLimit != null) {
+            linkedAddressStream = linkedAddressStream.limit(nodeLimit);
+        }
+
+        linkedAddressStream = linkedAddressStream.map(address -> addressRepository.getAddressByAddress(address.getAddress()));
+
+        entityNode.setUserAddresses(linkedAddressStream.collect(Collectors.toList()));
 
         return entityNode;
     }
@@ -239,7 +249,7 @@ public class BitcoinService {
         return outputNode;
     }
 
-    public Transaction findTransaction(String txid, Date startDate, Date endDate, String startPrice, String endPrice, String priceUnit) {
+    public Transaction findTransaction(String txid, Date startDate, Date endDate, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
         Transaction transactionNode = findTransaction(txid);
         boolean hasDateFilter = startDate != null && endDate != null;
         boolean hasPriceFilter = startPrice != null && endPrice != null && priceUnit != null;
@@ -248,7 +258,11 @@ public class BitcoinService {
 
             if (transactionNode.getOutputs() != null) {
 
-                Stream<OutputRelation> outputStream = transactionNode.getOutputs().stream();
+                Stream<OutputRelation> outputStream = transactionNode.getOutputs().parallelStream();
+
+                if (nodeLimit != null) {
+                    outputStream = outputStream.limit(nodeLimit);
+                }
 
                 if (hasDateFilter) {
                     outputStream = outputStream.filter(output -> checkTimestampInDateRange(output.getTimestamp(), startDate, endDate));
@@ -265,7 +279,11 @@ public class BitcoinService {
 
             if (transactionNode.getInputs() != null) {
 
-                Stream<InputRelation> inputStream = transactionNode.getInputs().stream();
+                Stream<InputRelation> inputStream = transactionNode.getInputs().parallelStream();
+
+                if (nodeLimit != null) {
+                    inputStream = inputStream.limit(nodeLimit);
+                }
 
                 if (hasDateFilter) {
                     inputStream = inputStream.filter(input -> checkTimestampInDateRange(input.getTimestamp(), startDate, endDate));
