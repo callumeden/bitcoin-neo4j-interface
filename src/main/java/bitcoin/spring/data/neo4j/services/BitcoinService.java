@@ -96,7 +96,7 @@ public class BitcoinService {
             return new HashSet<>();
         }
 
-        Stream<Transaction> allTransactionsThisAddressInputs = getTransactionsForAddress(addressNode, startFilter, endFilter);
+        Stream<Transaction> allTransactionsThisAddressInputs = getTransactionsForAddress(addressNode, startFilter, endFilter, nodeLimit);
         HashSet<Transaction> thisAddressesTransactions = allTransactionsThisAddressInputs.collect(Collectors.toCollection(HashSet::new));
 
         //removes all transactions we've already seen
@@ -106,7 +106,7 @@ public class BitcoinService {
         exploredTransactions.addAll(thisAddressesTransactions);
 
         //all addresses linked directly (1 transaction hop away) from this address
-        Stream<Address> linkedAddressesStream = getAddressesLinkedByTransactions(thisAddressesTransactions.parallelStream(), startFilter, endFilter);
+        Stream<Address> linkedAddressesStream = getAddressesLinkedByTransactions(thisAddressesTransactions.parallelStream(), startFilter, endFilter, nodeLimit);
         Set<Address> directlyLinkedAddresses = linkedAddressesStream.collect(Collectors.toSet());
 
         //all addresses linked transitively (2 transaction hops away) from this address
@@ -118,24 +118,34 @@ public class BitcoinService {
         return directlyLinkedAddresses;
     }
 
-    private Stream<Transaction> getTransactionsForAddress(Address address, Date startFilter, Date endFilter) {
-        return address.getOutputs()
-                .parallelStream()
-                .map(outputShell -> findOutputNode(outputShell.getOutputId(), startFilter, endFilter))
+    private Stream<Transaction> getTransactionsForAddress(Address address, Date startFilter, Date endFilter, Integer nodeLimit) {
+        Stream<Output> outputStream = address.getOutputs()
+                .parallelStream();
+
+        if (nodeLimit != null) {
+            outputStream = outputStream.limit(nodeLimit);
+        }
+
+        return outputStream.map(outputShell -> findOutputNode(outputShell.getOutputId(), startFilter, endFilter))
                 .filter(outputNode -> outputNode.getInputsTransaction() != null)
                 .map(outputNode -> outputNode.getInputsTransaction().getTransaction())
                 .map(transactionShell -> findTransaction(transactionShell.getTransactionId()))
                 .filter(transactionNode -> transactionNode.getInputs() != null && transactionNode.getInputs().size() > 1);
     }
 
-    private Stream<Address> getAddressesLinkedByTransactions(Stream<Transaction> transactionStream, Date startFilter, Date endFilter) {
-        return transactionStream.flatMap(tx -> getAddressesLinkedByTransaction(tx, startFilter, endFilter));
+    private Stream<Address> getAddressesLinkedByTransactions(Stream<Transaction> transactionStream, Date startFilter, Date endFilter, Integer nodeLimit) {
+        return transactionStream.flatMap(tx -> getAddressesLinkedByTransaction(tx, startFilter, endFilter, nodeLimit));
     }
 
-    private Stream<Address> getAddressesLinkedByTransaction(Transaction transaction, Date start, Date end) {
-        return transaction.getInputs()
-                .parallelStream()
-                .map(InputRelation::getInput)
+    private Stream<Address> getAddressesLinkedByTransaction(Transaction transaction, Date start, Date end, Integer nodeLimit) {
+        Stream<InputRelation> inputStream = transaction.getInputs()
+                .parallelStream();
+
+        if (nodeLimit != null) {
+            inputStream = inputStream.limit(nodeLimit);
+        }
+
+        return inputStream.map(InputRelation::getInput)
                 .map(inputShell -> findOutputNode(inputShell.getOutputId(), start, end))
                 .map(Output::getLockedToAddress);
     }
