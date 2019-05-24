@@ -58,10 +58,6 @@ public class BitcoinService {
             Stream<Output> outputStream = addressNode.getOutputs()
                     .parallelStream();
 
-            if (nodeLimit != null) {
-                System.out.println("ADDRESS TRUNCATING ...........................................");
-                outputStream = outputStream.limit(nodeLimit);
-            }
 
             outputStream = outputStream.map(output -> this.findOutputNode(output.getOutputId(), start, end));
 
@@ -72,6 +68,11 @@ public class BitcoinService {
 
             if (hasPriceFilter) {
                 outputStream = filterOutputStreamByPrice(outputStream, startPrice, endPrice, priceUnit);
+            }
+
+            if (nodeLimit != null && outputStream != null) {
+                System.out.println("ADDRESS TRUNCATING ...........................................");
+                outputStream = outputStream.limit(nodeLimit);
             }
 
             addressNode.setOutputs(outputStream.collect(Collectors.toList()));
@@ -289,16 +290,16 @@ public class BitcoinService {
 
                 Stream<OutputRelation> outputStream = transactionNode.getOutputs().parallelStream();
 
-                if (nodeLimit != null) {
-                    outputStream = outputStream.limit(nodeLimit);
-                }
-
                 if (hasDateFilter) {
                     outputStream = outputStream.filter(output -> checkTimestampInDateRange(output.getTimestamp(), startDate, endDate));
                 }
 
                 if (hasPriceFilter) {
                     outputStream = filterOutRelationStreamByPrice(outputStream, startPrice, endPrice, priceUnit);
+                }
+
+                if (nodeLimit != null && outputStream != null) {
+                    outputStream = outputStream.limit(nodeLimit);
                 }
 
                 if (outputStream != null) {
@@ -310,9 +311,6 @@ public class BitcoinService {
 
                 Stream<InputRelation> inputStream = transactionNode.getInputs().parallelStream();
 
-                if (nodeLimit != null) {
-                    inputStream = inputStream.limit(nodeLimit);
-                }
 
                 if (hasDateFilter) {
                     inputStream = inputStream.filter(input -> checkTimestampInDateRange(input.getTimestamp(), startDate, endDate));
@@ -320,6 +318,10 @@ public class BitcoinService {
 
                 if (hasPriceFilter) {
                     inputStream = filterInRelationStreamByPrice(inputStream, startPrice, endPrice, priceUnit);
+                }
+
+                if (nodeLimit != null && inputStream != null) {
+                    inputStream = inputStream.limit(nodeLimit);
                 }
 
                 if (inputStream != null) {
