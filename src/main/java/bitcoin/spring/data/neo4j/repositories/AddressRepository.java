@@ -28,9 +28,9 @@ public interface AddressRepository extends Neo4jRepository<Address, Long> {
     void deleteClustering();
 
     @Query("MATCH " +
-            "(a1:ADDRESS{address:{0}})<-[:LOCKED_TO]-(outStart:OUTPUT)-[:INPUTS]->(:TRANSACTION), " +
-            "(a2:ADDRESS{address:{1}})<-[:LOCKED_TO]-(outEnd:OUTPUT)<-[:OUTPUTS]-(:TRANSACTION), " +
-            "p = shortestPath((outStart)-[:INPUTS |:OUTPUTS |:LOCKED_TO*..1000]-(outEnd)) " +
+            "(a1:ADDRESS{address:{0}}), " +
+            "(a2:ADDRESS{address:{1}}), " +
+            "p = shortestPath((a1)-[:INPUTS |:OUTPUTS |:LOCKED_TO*..1000]-(a2)) " +
             "RETURN a1 as startNode, nodes(p) as intermediateNodes, relationships(p) as rels" +
             ", a2 as endNode")
     Iterable<Map<String, Object>> shortestPath(String sourceAddress, String destinationAddress);
