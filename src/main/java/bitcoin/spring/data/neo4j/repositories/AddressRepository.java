@@ -5,6 +5,8 @@ import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Map;
+
 public interface AddressRepository extends Neo4jRepository<Address, Long> {
 
     Address getAddressByAddress(@Param("address") String address);
@@ -24,4 +26,14 @@ public interface AddressRepository extends Neo4jRepository<Address, Long> {
             "DELETE r\n" +
             "RETURN count(r)")
     void deleteClustering();
+
+    @Query("MATCH " +
+            "(a1:ADDRESS{address:{0}})<-[:LOCKED_TO]-(outStart:OUTPUT)-[:INPUTS]->(:TRANSACTION), " +
+            "(a2:ADDRESS{address:{1}})<-[:LOCKED_TO]-(outEnd:OUTPUT)<-[:OUTPUTS]-(:TRANSACTION), " +
+            "p = shortestPath((outStart)-[:INPUTS |:OUTPUTS |:LOCKED_TO*..1000]-(outEnd)) " +
+            "RETURN a1 as startNode, nodes(p) as intermediateNodes, relationships(p) as rels" +
+            ", a2 as endNode")
+    Iterable<Map<String, Object>> shortestPath(String sourceAddress, String destinationAddress);
+
+
 }

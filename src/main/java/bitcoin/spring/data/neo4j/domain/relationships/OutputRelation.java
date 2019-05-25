@@ -29,21 +29,33 @@ public class OutputRelation {
     }
 
     public double getGbpValue() {
-        double gbpExchangeRate = getTransaction().getMinedInBlock().getGbp();
-        double outputValue = getOutput().getValue();
-        return gbpExchangeRate * outputValue;
+        if (transaction.getMinedInBlock() != null) {
+            double gbpExchangeRate =transaction.getMinedInBlock().getGbp();
+            double outputValue = output.getValue();
+            return gbpExchangeRate * outputValue;
+        }
+
+        return -1;
+
     }
 
     public double getUsdValue() {
-        double usdExchangeRate = getTransaction().getMinedInBlock().getUsd();
-        double outputValue = getOutput().getValue();
-        return usdExchangeRate * outputValue;
+        if (transaction.getMinedInBlock() != null) {
+            double usdExchangeRate = transaction.getMinedInBlock().getUsd();
+            double outputValue = output.getValue();
+            return usdExchangeRate * outputValue;
+        }
+
+        return -1;
     }
 
     public double getEurValue() {
-        double eurExchangeRate = getTransaction().getMinedInBlock().getEur();
-        double outputValue = getOutput().getValue();
-        return eurExchangeRate * outputValue;
+        if (transaction.getMinedInBlock() != null) {
+            double eurExchangeRate = transaction.getMinedInBlock().getEur();
+            double outputValue = output.getValue();
+            return eurExchangeRate * outputValue;
+        }
+        return -1;
     }
 
     public void setTransaction(Transaction transaction) {
@@ -51,6 +63,10 @@ public class OutputRelation {
     }
 
     public long getTimestamp() {
-        return transaction.getMinedInBlock().getTimestamp();
+        if (transaction.getMinedInBlock() != null) {
+            return transaction.getMinedInBlock().getTimestamp();
+        }
+
+        return -1;
     }
 }

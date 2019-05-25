@@ -1,6 +1,7 @@
 package bitcoin.spring.data.neo4j.controller;
 
 import bitcoin.spring.data.neo4j.services.BitcoinService;
+import bitcoin.spring.data.neo4j.services.PathFinderService;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -15,9 +16,11 @@ import java.util.Date;
 public class BitcoinController {
 
     private final BitcoinService bitcoinService;
+    private final PathFinderService pathFinderService;
 
-    public BitcoinController(BitcoinService bitcoinService) {
+    public BitcoinController(BitcoinService bitcoinService, PathFinderService pathFinderService) {
         this.bitcoinService = bitcoinService;
+        this.pathFinderService = pathFinderService;
     }
 
     @GetMapping("/getAddress/{address}")
@@ -105,6 +108,13 @@ public class BitcoinController {
 
     private Date parseDateFromTimestamp(String timestamp) {
         return Date.from(Instant.ofEpochMilli(Long.valueOf(timestamp)));
+    }
+
+    @GetMapping("/getShortestPath/{sourceAddress}/{destinationAddress}")
+    @CrossOrigin
+    public HttpEntity getShortestPath(@PathVariable("sourceAddress") String sourceAddress,
+                                      @PathVariable("destinationAddress") String destinationAddress) {
+        return entityOrNotFound(this.pathFinderService.getShortestPath(sourceAddress, destinationAddress));
     }
 
 }

@@ -67,7 +67,7 @@ public class ClusteringService {
                     String inputId = inputRelation.getInput().getOutputId();
 
                     Output refetchedTransactionInput = getOutputById(inputId);
-                    Address addressSpendingTransactionInput = refetchedTransactionInput.getLockedToAddress();
+                    Address addressSpendingTransactionInput = refetchedTransactionInput.getLockedToAddress().getAddress();
 
                     if (addressSpendingTransactionInput != null) {
                         addressesSpendingTransactionInputs.add(addressSpendingTransactionInput);

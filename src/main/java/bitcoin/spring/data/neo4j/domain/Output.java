@@ -1,6 +1,7 @@
 package bitcoin.spring.data.neo4j.domain;
 
 import bitcoin.spring.data.neo4j.domain.relationships.InputRelation;
+import bitcoin.spring.data.neo4j.domain.relationships.LockedToRelation;
 import bitcoin.spring.data.neo4j.domain.relationships.OutputRelation;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.neo4j.ogm.annotation.GeneratedValue;
@@ -40,9 +41,9 @@ public class Output {
 
     @JsonIgnoreProperties({"outputs", "inputHeuristicLinkedAddresses"})
     @Relationship(type = "LOCKED_TO")
-    private Address lockedToAddress;
+    private LockedToRelation lockedToAddress;
 
-    public Address getLockedToAddress() {
+    public LockedToRelation getLockedToAddress() {
         return lockedToAddress;
     }
 
@@ -52,10 +53,6 @@ public class Output {
 
     public void setInputsTransaction(InputRelation inputsTransaction) {
         this.inputsTransaction = inputsTransaction;
-    }
-
-    public void setLockedToAddress(Address lockedToAddress) {
-        this.lockedToAddress = lockedToAddress;
     }
 
 }

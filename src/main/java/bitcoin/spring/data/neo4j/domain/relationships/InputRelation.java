@@ -33,24 +33,39 @@ public class InputRelation {
     }
 
     public double getGbpValue() {
-        double inputValue = input.getValue();
-        double gbpExchangeRate = transaction.getMinedInBlock().getGbp();
-        return inputValue * gbpExchangeRate;
+        if (transaction.getMinedInBlock() != null) {
+            double inputValue = input.getValue();
+            double gbpExchangeRate = transaction.getMinedInBlock().getGbp();
+            return inputValue * gbpExchangeRate;
+        }
+
+        return -1;
     }
 
     public double getUsdValue() {
-        double inputValue = input.getValue();
-        double usdExchangeRate = transaction.getMinedInBlock().getUsd();
-        return inputValue * usdExchangeRate;
+        if (transaction.getMinedInBlock() != null) {
+            double inputValue = input.getValue();
+            double usdExchangeRate = transaction.getMinedInBlock().getUsd();
+            return inputValue * usdExchangeRate;
+        }
+
+        return -1;
     }
 
     public double getEurValue() {
-        double inputValue = input.getValue();
-        double eurExchangeRate = transaction.getMinedInBlock().getEur();
-        return inputValue * eurExchangeRate;
+        if (transaction.getMinedInBlock() != null) {
+            double inputValue = input.getValue();
+            double eurExchangeRate = transaction.getMinedInBlock().getEur();
+            return inputValue * eurExchangeRate;
+        }
+
+        return -1;
     }
 
     public long getTimestamp() {
-        return transaction.getMinedInBlock().getTimestamp();
+        if (transaction.getMinedInBlock() != null) {
+            return transaction.getMinedInBlock().getTimestamp();
+        }
+        return -1;
     }
 }

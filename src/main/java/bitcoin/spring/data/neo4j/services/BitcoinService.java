@@ -2,6 +2,7 @@ package bitcoin.spring.data.neo4j.services;
 
 import bitcoin.spring.data.neo4j.domain.*;
 import bitcoin.spring.data.neo4j.domain.relationships.InputRelation;
+import bitcoin.spring.data.neo4j.domain.relationships.LockedToRelation;
 import bitcoin.spring.data.neo4j.domain.relationships.OutputRelation;
 import bitcoin.spring.data.neo4j.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,15 +57,16 @@ public class BitcoinService {
         }
 
         if (addressNode.getOutputs() != null) {
-            Stream<Output> outputStream = addressNode.getOutputs()
-                    .parallelStream();
+            Stream<LockedToRelation> outputStream = addressNode.getOutputs().parallelStream();
 
-
-            outputStream = outputStream.map(output -> this.findOutputNode(output.getOutputId(), start, end));
+            outputStream = outputStream.peek(outputRelation -> {
+                Output outNode = this.findOutputNode(outputRelation.getOutput().getOutputId(), start, end);
+                outputRelation.setOutput(outNode);
+            });
 
             if (hasDateFilter) {
                 outputStream = outputStream
-                        .filter(out -> checkTimestampInDateRange(out.getProducedByTransaction().getTimestamp(), start, end));
+                        .filter(out -> checkTimestampInDateRange(out.getOutput().getProducedByTransaction().getTimestamp(), start, end));
             }
 
             if (hasPriceFilter) {
@@ -75,7 +78,10 @@ public class BitcoinService {
                 outputStream = outputStream.limit(nodeLimit);
             }
 
-            addressNode.setOutputs(outputStream.collect(Collectors.toList()));
+            if (outputStream != null) {
+                addressNode.setOutputs(outputStream.collect(Collectors.toList()));
+            }
+
         }
         return addressNode;
     }
@@ -127,14 +133,14 @@ public class BitcoinService {
     }
 
     private Stream<Transaction> getTransactionsForAddress(Address address, Date startFilter, Date endFilter, Integer nodeLimit) {
-        Stream<Output> outputStream = address.getOutputs()
+        Stream<LockedToRelation> outputStream = address.getOutputs()
                 .parallelStream();
 
         if (nodeLimit != null) {
             outputStream = outputStream.limit(nodeLimit);
         }
 
-        return outputStream.map(outputShell -> findOutputNode(outputShell.getOutputId(), startFilter, endFilter))
+        return outputStream.map(outputShell -> findOutputNode(outputShell.getOutput().getOutputId(), startFilter, endFilter))
                 .filter(outputNode -> outputNode.getInputsTransaction() != null)
                 .map(outputNode -> outputNode.getInputsTransaction().getTransaction())
                 .map(transactionShell -> findTransaction(transactionShell.getTransactionId()))
@@ -155,19 +161,19 @@ public class BitcoinService {
 
         return inputStream.map(InputRelation::getInput)
                 .map(inputShell -> findOutputNode(inputShell.getOutputId(), start, end))
-                .map(Output::getLockedToAddress);
+                .map(output -> output.getLockedToAddress().getAddress());
     }
 
-    private Stream<Output> filterOutputStreamByPrice(Stream<Output> outputStream, String startPrice, String endPrice, String priceUnit) {
+    private Stream<LockedToRelation> filterOutputStreamByPrice(Stream<LockedToRelation> outputStream, String startPrice, String endPrice, String priceUnit) {
         switch (priceUnit) {
             case "btc":
-                return outputStream.filter(output -> isValueInRange(output.getValue(), startPrice, endPrice));
+                return outputStream.filter(output -> isValueInRange(output.getOutput().getValue(), startPrice, endPrice));
             case "gbp":
-                return outputStream.filter(output -> isValueInRange(output.getProducedByTransaction().getGbpValue(), startPrice, endPrice));
+                return outputStream.filter(output -> isValueInRange(output.getOutput().getProducedByTransaction().getGbpValue(), startPrice, endPrice));
             case "usd":
-                return outputStream.filter(output -> isValueInRange(output.getProducedByTransaction().getUsdValue(), startPrice, endPrice));
+                return outputStream.filter(output -> isValueInRange(output.getOutput().getProducedByTransaction().getUsdValue(), startPrice, endPrice));
             case "eur":
-                return outputStream.filter(output -> isValueInRange(output.getProducedByTransaction().getEurValue(), startPrice, endPrice));
+                return outputStream.filter(output -> isValueInRange(output.getOutput().getProducedByTransaction().getEurValue(), startPrice, endPrice));
         }
 
         return null;
@@ -234,7 +240,7 @@ public class BitcoinService {
         Output outputNode = findOutputNode(id, startDate, endDate);
 
         if (outputNode.getLockedToAddress() != null) {
-            Address addressNode = outputNode.getLockedToAddress();
+            Address addressNode = outputNode.getLockedToAddress().getAddress();
             Set<Address> clusteredAddresses = performInputClustering(addressNode, startDate, endDate, 1);
             addressNode.setHasLinkedAddresses(clusteredAddresses.size() > 0);
         }
@@ -272,8 +278,8 @@ public class BitcoinService {
             }
 
             if (outputNode.getLockedToAddress() != null) {
-                Address populatedAddress = addressRepository.getAddressByAddress(outputNode.getLockedToAddress().getAddress());
-                outputNode.setLockedToAddress(populatedAddress);
+                Address populatedAddress = addressRepository.getAddressByAddress(outputNode.getLockedToAddress().getAddress().getAddress());
+                outputNode.getLockedToAddress().setAddress(populatedAddress);
             }
         }
         return outputNode;
