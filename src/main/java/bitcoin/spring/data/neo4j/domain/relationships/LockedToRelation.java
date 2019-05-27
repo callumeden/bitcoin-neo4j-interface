@@ -12,7 +12,7 @@ public class LockedToRelation {
     @GeneratedValue
     private Long relationshipId;
 
-    @JsonIgnoreProperties({"lockedToAddress", "producedByTransaction", "inputsTransaction"})
+    @JsonIgnoreProperties({"lockedToAddress", "inputsTransaction"})
     @StartNode
     private Output output;
 

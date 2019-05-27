@@ -39,7 +39,7 @@ public class Output {
     @Relationship(type = "INPUTS")
     private InputRelation inputsTransaction;
 
-    @JsonIgnoreProperties({"outputs", "inputHeuristicLinkedAddresses"})
+    @JsonIgnoreProperties({"outputs", "inputHeuristicLinkedAddresses", "output"})
     @Relationship(type = "LOCKED_TO")
     private LockedToRelation lockedToAddress;
 
