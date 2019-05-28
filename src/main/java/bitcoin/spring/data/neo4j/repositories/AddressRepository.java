@@ -30,7 +30,7 @@ public interface AddressRepository extends Neo4jRepository<Address, Long> {
     @Query("MATCH " +
             "(a1:ADDRESS{address:{0}}), " +
             "(a2:ADDRESS{address:{1}}), " +
-            "p = shortestPath((a1)-[:INPUTS |:OUTPUTS |:LOCKED_TO*..1000]-(a2)) " +
+            "p = shortestPath((a1)-[:INPUTS |:OUTPUTS |:LOCKED_TO*..100]-(a2)) " +
             "RETURN a1 as startNode, nodes(p) as intermediateNodes, relationships(p) as rels" +
             ", a2 as endNode")
     Iterable<Map<String, Object>> shortestPath(String sourceAddress, String destinationAddress);
