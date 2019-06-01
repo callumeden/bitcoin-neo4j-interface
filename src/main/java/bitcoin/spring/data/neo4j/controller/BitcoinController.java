@@ -23,7 +23,7 @@ public class BitcoinController {
         this.pathFinderService = pathFinderService;
     }
 
-    @GetMapping("/getAddress/{address}")
+    @GetMapping("/address/{address}")
     @CrossOrigin
     public HttpEntity getAddress(@PathVariable("address") String address,
                                  @RequestParam(value = "startTime", required = false) String startDateString,
@@ -47,19 +47,19 @@ public class BitcoinController {
         return null;
     }
 
-    @GetMapping("/getBlock/{hash}")
+    @GetMapping("/block/{hash}")
     @CrossOrigin
     public HttpEntity getBlock(@PathVariable("hash") String hash) {
         return entityOrNotFound(this.bitcoinService.findBlockByHash(hash));
     }
 
-    @GetMapping("/getCoinbase/{coinbaseId}")
+    @GetMapping("/coinbase/{coinbaseId}")
     @CrossOrigin
     public HttpEntity getCoinbase(@PathVariable("coinbaseId") String coinbaseId) {
         return entityOrNotFound(this.bitcoinService.findCoinbase(coinbaseId));
     }
 
-    @GetMapping("/getEntity/{name}")
+    @GetMapping("/entity/{name}")
     @CrossOrigin
     public HttpEntity getEntity(@PathVariable("name") String name,
                                 @RequestParam(value = "startTime", required = false) String startDateString,
@@ -78,7 +78,7 @@ public class BitcoinController {
                 new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @GetMapping("/getOutput/{id}")
+    @GetMapping("/output/{id}")
     @CrossOrigin
     public HttpEntity getOutput(@PathVariable("id") String id,
                                 @RequestParam(value = "startTime", required = false) String startTime,
@@ -90,7 +90,7 @@ public class BitcoinController {
         return entityOrNotFound(this.bitcoinService.findOutputNodeCheckIfCanCluster(id, startDate, endDate));
     }
 
-    @GetMapping("/getTransaction/{txid}")
+    @GetMapping("/transaction/{txid}")
     @CrossOrigin
     public HttpEntity getTransaction(@PathVariable("txid") String txid,
                                      @RequestParam(value = "startTime", required = false) String startTime,
@@ -110,7 +110,7 @@ public class BitcoinController {
         return Date.from(Instant.ofEpochMilli(Long.valueOf(timestamp)));
     }
 
-    @GetMapping("/getShortestPath/{sourceAddress}/{destinationAddress}")
+    @GetMapping("/shortestPath/{sourceAddress}/{destinationAddress}")
     @CrossOrigin
     public HttpEntity getShortestPath(@PathVariable("sourceAddress") String sourceAddress,
                                       @PathVariable("destinationAddress") String destinationAddress) {
