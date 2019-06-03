@@ -43,7 +43,7 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    private Address findAddressProperFiltering(String address, Date start, Date end, Integer limit) {
+    public Address findAddressProperFiltering(String address, Date start, Date end, Integer limit) {
         boolean hasDateFilter = start != null && end != null;
         boolean hasLimit = limit != null;
         Address addressNode;
@@ -239,19 +239,22 @@ public class BitcoinService {
         boolean hasBTCPriceFilter = startPrice != null && endPrice != null && priceUnit.equals("btc");
         boolean hasLimit = nodeLimit != null;
 
-
-        if (hasBTCPriceFilter) {
-            entityNode = entityRepository.getEntityaddressPriceFiltered(name, Double.valueOf(startPrice), Double.valueOf(endPrice));
+        if (hasBTCPriceFilter && hasDateFilter) {
+            entityNode = entityRepository.getEntityAddressPriceAndTimeFiltered(name, start.getTime() / 1000, end.getTime() / 1000, Double.valueOf(startPrice), Double.valueOf(endPrice));
         } else {
-
-            if (hasDateFilter && hasLimit) {
-                entityNode = entityRepository.getEntityAddressFiltered(name, start.getTime() / 1000, end.getTime() / 1000, nodeLimit);
+            if (hasBTCPriceFilter) {
+                entityNode = entityRepository.getEntityaddressPriceFiltered(name, Double.valueOf(startPrice), Double.valueOf(endPrice));
             } else {
 
-                if (hasDateFilter) {
-                    entityNode = entityRepository.getEntityAddressFiltered(name, start.getTime() / 1000, end.getTime() / 1000);
+                if (hasDateFilter && hasLimit) {
+                    entityNode = entityRepository.getEntityAddressFiltered(name, start.getTime() / 1000, end.getTime() / 1000, nodeLimit);
                 } else {
-                    entityNode = entityRepository.getEntityByName(name);
+
+                    if (hasDateFilter) {
+                        entityNode = entityRepository.getEntityAddressFiltered(name, start.getTime() / 1000, end.getTime() / 1000);
+                    } else {
+                        entityNode = entityRepository.getEntityByName(name);
+                    }
                 }
             }
         }
