@@ -82,12 +82,13 @@ public class BitcoinController {
     @CrossOrigin
     public HttpEntity getOutput(@PathVariable("id") String id,
                                 @RequestParam(value = "startTime", required = false) String startTime,
-                                @RequestParam(value = "endTime", required = false) String endTime) {
+                                @RequestParam(value = "endTime", required = false) String endTime,
+                                @RequestParam(value = "nodeLimit", required = false) Integer nodeLimit) {
 
         Date startDate = parseDate(startTime);
         Date endDate = parseDate(endTime);
 
-        return entityOrNotFound(this.bitcoinService.findOutputNodeCheckIfCanCluster(id, startDate, endDate));
+        return entityOrNotFound(this.bitcoinService.findOutputNodeCheckIfCanCluster(id, startDate, endDate, nodeLimit));
     }
 
     @GetMapping("/transaction/{txid}")

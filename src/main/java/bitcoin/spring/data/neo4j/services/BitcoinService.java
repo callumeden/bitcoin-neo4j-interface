@@ -42,22 +42,32 @@ public class BitcoinService {
         return blockRepository.findByHash(hash);
     }
 
-    private Address findAddressProperFiltering(String address, Date start, Date end) {
+    private Address findAddressProperFiltering(String address, Date start, Date end, Integer limit) {
         boolean hasDateFilter = start != null && end != null;
-
+        boolean hasLimit = limit != null;
         Address addressNode;
 
-        if (hasDateFilter) {
-            addressNode = addressRepository.findAddressFilterByDate(address, start.toInstant().toEpochMilli()/ 1000, end.toInstant().toEpochMilli() / 1000);
+        if (hasDateFilter && hasLimit) {
+            addressNode = addressRepository
+                    .findAddressFilterByDate(
+                            address,
+                            start.toInstant().toEpochMilli()/ 1000,
+                            end.toInstant().toEpochMilli() / 1000,
+                            limit);
         } else {
-            addressNode = addressRepository.getAddressByAddress(address);
+
+            if (hasDateFilter) {
+                addressNode = addressRepository.findAddressFilterByDate(address, start.toInstant().toEpochMilli()/ 1000, end.toInstant().toEpochMilli() / 1000);
+            } else {
+                addressNode = addressRepository.getAddressByAddress(address);
+            }
         }
 
         return addressNode;
     }
 
     private Address findAddress(String address, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
-        Address addressNode = findAddressProperFiltering(address, start, end);
+        Address addressNode = findAddressProperFiltering(address, start, end, nodeLimit);
         boolean hasPriceFilter = startPrice != null && endPrice != null && priceUnit != null;
 
         if (addressNode == null) {
@@ -68,7 +78,7 @@ public class BitcoinService {
             Stream<LockedToRelation> outputStream = addressNode.getOutputs().parallelStream();
 
             outputStream = outputStream.peek(outputRelation -> {
-                Output outNode = this.findOutputNode(outputRelation.getOutput().getOutputId(), start, end);
+                Output outNode = this.findOutputNode(outputRelation.getOutput().getOutputId(), start, end, nodeLimit);
                 outputRelation.setOutput(outNode);
             });
 
@@ -143,10 +153,10 @@ public class BitcoinService {
             outputStream = outputStream.limit(nodeLimit);
         }
 
-        return outputStream.map(outputShell -> findOutputNode(outputShell.getOutput().getOutputId(), startFilter, endFilter))
+        return outputStream.map(outputShell -> findOutputNode(outputShell.getOutput().getOutputId(), startFilter, endFilter, nodeLimit))
                 .filter(outputNode -> outputNode.getInputsTransaction() != null)
                 .map(outputNode -> outputNode.getInputsTransaction().getTransaction())
-                .map(transactionShell -> findTransactionProperFiltering(transactionShell.getTransactionId(), startFilter, endFilter))
+                .map(transactionShell -> findTransactionProperFiltering(transactionShell.getTransactionId(), startFilter, endFilter, nodeLimit))
                 .filter(transactionNode -> transactionNode.getInputs() != null && transactionNode.getInputs().size() > 1);
     }
 
@@ -163,7 +173,7 @@ public class BitcoinService {
         }
 
         return inputStream.map(InputRelation::getInput)
-                .map(inputShell -> findOutputNode(inputShell.getOutputId(), start, end))
+                .map(inputShell -> findOutputNode(inputShell.getOutputId(), start, end, nodeLimit))
                 .map(output -> output.getLockedToAddress().getAddress());
     }
 
@@ -249,8 +259,8 @@ public class BitcoinService {
         return entityNode;
     }
 
-    public Output findOutputNodeCheckIfCanCluster(String id, Date startDate, Date endDate) {
-        Output outputNode = findOutputNode(id, startDate, endDate);
+    public Output findOutputNodeCheckIfCanCluster(String id, Date startDate, Date endDate, Integer nodeLimit) {
+        Output outputNode = findOutputNode(id, startDate, endDate, nodeLimit);
 
         if (outputNode != null && outputNode.getLockedToAddress() != null) {
             Address addressNode = outputNode.getLockedToAddress().getAddress();
@@ -262,7 +272,7 @@ public class BitcoinService {
     }
 
     @Transactional(readOnly = true)
-    public Output findOutputNode(String id, Date startDate, Date endDate) {
+    public Output findOutputNode(String id, Date startDate, Date endDate, Integer nodeLimit) {
         Output outputNode = outputRepository.getOutputByOutputId(id);
         boolean hasDateFilter = startDate != null && endDate != null;
 
@@ -273,7 +283,7 @@ public class BitcoinService {
 
             if (outRelation != null) {
                 Transaction producedByTx = outRelation.getTransaction();
-                Transaction fullProducedByTx = findTransactionProperFiltering(producedByTx.getTransactionId(), startDate, endDate);
+                Transaction fullProducedByTx = findTransactionProperFiltering(producedByTx.getTransactionId(), startDate, endDate, nodeLimit);
                 outRelation.setTransaction(fullProducedByTx);
             }
 
@@ -281,7 +291,7 @@ public class BitcoinService {
             if (inRelation != null) {
 
                 Transaction inputsTx = inRelation.getTransaction();
-                Transaction fullInputsTx = findTransactionProperFiltering(inputsTx.getTransactionId(), startDate, endDate);
+                Transaction fullInputsTx = findTransactionProperFiltering(inputsTx.getTransactionId(), startDate, endDate, nodeLimit);
                 inRelation.setTransaction(fullInputsTx);
 
                 long txTimestamp = inRelation.getTimestamp();
@@ -299,22 +309,34 @@ public class BitcoinService {
         return outputNode;
     }
 
-    private Transaction findTransactionProperFiltering(String txid, Date start, Date end) {
+    private Transaction findTransactionProperFiltering(String txid, Date start, Date end, Integer limit) {
         boolean hasDateFilter = start != null && end != null;
+        boolean hasLimit = limit != null;
         Transaction transactionNode;
 
-        if (hasDateFilter) {
-            transactionNode = transactionRepository.getTransactionFilterTime(txid, start.toInstant().toEpochMilli() / 1000, end.toInstant().toEpochMilli() / 1000);
+        if (hasDateFilter && hasLimit) {
+            transactionNode = transactionRepository.getTransactionFilterTime(
+                    txid,
+                    start.toInstant().toEpochMilli() / 1000,
+                    end.toInstant().toEpochMilli() / 1000,
+                    limit);
+
         } else {
-            transactionNode = transactionRepository.getTransactionByTransactionId(txid);
+
+            if (hasDateFilter) {
+                transactionNode = transactionRepository.getTransactionFilterTime(txid, start.toInstant().toEpochMilli() / 1000, end.toInstant().toEpochMilli() / 1000);
+            } else {
+                transactionNode = transactionRepository.getTransactionByTransactionId(txid);
+            }
         }
+
 
         return transactionNode;
     }
 
 
     public Transaction findTransaction(String txid, Date startDate, Date endDate, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
-        Transaction transactionNode = findTransactionProperFiltering(txid, startDate, endDate);
+        Transaction transactionNode = findTransactionProperFiltering(txid, startDate, endDate, nodeLimit);
         boolean hasPriceFilter = startPrice != null && endPrice != null && priceUnit != null;
 
         if (transactionNode != null) {
