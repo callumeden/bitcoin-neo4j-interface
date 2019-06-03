@@ -12,21 +12,23 @@ public interface AddressRepository extends Neo4jRepository<Address, Long> {
     Address getAddressByAddress(@Param("address") String address);
 
 
-    @Query("MATCH (n:ADDRESS)<-[lockedRel:LOCKED_TO]-(out:OUTPUT)<-[:OUTPUTS]-(tx:TRANSACTION)-[:MINED_IN]->(b:BLOCK) WHERE \n" +
-            "n.address = {0}\n" +
-            "AND b.timestamp> {1} AND b.timestamp < {2} \n" +
-            "WITH n, lockedRel, out  RETURN n, \n" +
-            "[ [ [ lockedRel, out ] ],\n" +
-            "[ (n)-[entityRel:HAS_ENTITY]->(entity:ENTITY) | [ entityRel, entity ] ] ], \n" +
+    @Query("MATCH (n:ADDRESS)\n"+
+            "WHERE n.address = {0}\n"+
+            "OPTIONAL MATCH (n)<-[lockedRel:LOCKED_TO]-(out:OUTPUT)<-[:OUTPUTS]-(tx:TRANSACTION)-[:MINED_IN]->(b:BLOCK)\n"+
+            "WHERE b.timestamp> {1} AND b.timestamp < {2}\n"+
+            "WITH n, lockedRel, out  RETURN n,\n"+
+            "[ [ [ lockedRel, out ] ],\n"+
+            "[ (n)-[entityRel:HAS_ENTITY]->(entity:ENTITY) | [ entityRel, entity ] ] ],\n"+
             "ID(n)")
     Address findAddressFilterByDate(String address, long startTime, long endTime);
 
-    @Query("MATCH (n:ADDRESS)<-[lockedRel:LOCKED_TO]-(out:OUTPUT)<-[:OUTPUTS]-(tx:TRANSACTION)-[:MINED_IN]->(b:BLOCK) WHERE \n" +
-            "n.address = {0}\n" +
-            "AND b.timestamp> {1} AND b.timestamp < {2} \n" +
-            "WITH n, lockedRel, out  RETURN n, \n" +
-            "[ [ [ lockedRel, out ] ],\n" +
-            "[ (n)-[entityRel:HAS_ENTITY]->(entity:ENTITY) | [ entityRel, entity ] ] ], \n" +
+    @Query("MATCH (n:ADDRESS)\n"+
+            "WHERE n.address = {0}\n"+
+            "OPTIONAL MATCH (n)<-[lockedRel:LOCKED_TO]-(out:OUTPUT)<-[:OUTPUTS]-(tx:TRANSACTION)-[:MINED_IN]->(b:BLOCK)\n"+
+            "WHERE b.timestamp> {1} AND b.timestamp < {2}\n"+
+            "WITH n, lockedRel, out  RETURN n,\n"+
+            "[ [ [ lockedRel, out ] ],\n"+
+            "[ (n)-[entityRel:HAS_ENTITY]->(entity:ENTITY) | [ entityRel, entity ] ] ],\n"+
             "ID(n) LIMIT {3}")
     Address findAddressFilterByDate(String address, long startTime, long endTime, int limit);
 
