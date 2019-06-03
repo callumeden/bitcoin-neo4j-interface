@@ -233,7 +233,20 @@ public class BitcoinService {
 
     @Transactional(readOnly = true)
     public Entity findEntity(String name, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
-        Entity entityNode = entityRepository.getEntityByName(name);
+        Entity entityNode;
+        boolean hasDateFilter = start!= null && end != null;
+        boolean hasLimit = nodeLimit != null;
+
+        if (hasDateFilter && hasLimit) {
+            entityNode = entityRepository.getEntityAddressFiltered(name, start.getTime() / 1000, end.getTime() / 1000, nodeLimit);
+        } else {
+
+            if (hasDateFilter) {
+                entityNode = entityRepository.getEntityAddressFiltered(name, start.getTime() / 1000, end.getTime() / 1000);
+            } else {
+                entityNode = entityRepository.getEntityByName(name);
+            }
+        }
 
         if (entityNode == null) {
             return null;
@@ -252,7 +265,6 @@ public class BitcoinService {
             }
 
             entityNode.setUserAddresses(linkedAddressStream.collect(Collectors.toList()));
-
         }
 
 
