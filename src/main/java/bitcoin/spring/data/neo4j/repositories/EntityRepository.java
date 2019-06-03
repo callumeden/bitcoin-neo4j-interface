@@ -40,11 +40,11 @@ public interface EntityRepository extends Neo4jRepository<Entity, Long> {
     @Query("PROFILE MATCH (n:ENTITY)\n" +
             "WHERE n.name = {0}\n" +
             "OPTIONAL MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(o:OUTPUT)<-[:OUTPUTS]-(:TRANSACTION)-[:MINED_IN]->(b:BLOCK)\n" +
-            "WHERE o.value > {1} AND o.value < {2} AND b.timestamp > {3} AND b.timestamp < {4}\n" +
+            "WHERE o.value > {3} AND o.value < {4} AND b.timestamp > {1} AND b.timestamp < {2}\n" +
             "WITH n, entityRel, a, o RETURN n,o,\n" +
             "[ [ [ entityRel, a ] ] ],\n" +
             "ID(n) LIMIT 50")
-    Entity getEntityAddressPriceAndTimeFiltered(String name, long start, long end, double startPrice, double endPrice);
+    Entity getEntityAddressPriceAndTimeFiltered(String name, long startTime, long endTime, double startPrice, double endPrice);
 
 
 
