@@ -42,11 +42,6 @@ public class BitcoinService {
         return blockRepository.findByHash(hash);
     }
 
-    @Transactional(readOnly = true)
-    public Transaction findTransaction(String txid) {
-        return transactionRepository.getTransactionByTransactionId(txid);
-    }
-
     private Address findAddressProperFiltering(String address, Date start, Date end) {
         boolean hasDateFilter = start != null && end != null;
 
@@ -151,7 +146,7 @@ public class BitcoinService {
         return outputStream.map(outputShell -> findOutputNode(outputShell.getOutput().getOutputId(), startFilter, endFilter))
                 .filter(outputNode -> outputNode.getInputsTransaction() != null)
                 .map(outputNode -> outputNode.getInputsTransaction().getTransaction())
-                .map(transactionShell -> findTransaction(transactionShell.getTransactionId()))
+                .map(transactionShell -> findTransactionProperFiltering(transactionShell.getTransactionId(), startFilter, endFilter))
                 .filter(transactionNode -> transactionNode.getInputs() != null && transactionNode.getInputs().size() > 1);
     }
 
@@ -278,7 +273,7 @@ public class BitcoinService {
 
             if (outRelation != null) {
                 Transaction producedByTx = outRelation.getTransaction();
-                Transaction fullProducedByTx = findTransaction(producedByTx.getTransactionId());
+                Transaction fullProducedByTx = findTransactionProperFiltering(producedByTx.getTransactionId(), startDate, endDate);
                 outRelation.setTransaction(fullProducedByTx);
             }
 
@@ -286,7 +281,7 @@ public class BitcoinService {
             if (inRelation != null) {
 
                 Transaction inputsTx = inRelation.getTransaction();
-                Transaction fullInputsTx = findTransaction(inputsTx.getTransactionId());
+                Transaction fullInputsTx = findTransactionProperFiltering(inputsTx.getTransactionId(), startDate, endDate);
                 inRelation.setTransaction(fullInputsTx);
 
                 long txTimestamp = inRelation.getTimestamp();
@@ -304,9 +299,22 @@ public class BitcoinService {
         return outputNode;
     }
 
+    private Transaction findTransactionProperFiltering(String txid, Date start, Date end) {
+        boolean hasDateFilter = start != null && end != null;
+        Transaction transactionNode;
+
+        if (hasDateFilter) {
+            transactionNode = transactionRepository.getTransactionFilterTime(txid, start.toInstant().toEpochMilli() / 1000, end.toInstant().toEpochMilli() / 1000);
+        } else {
+            transactionNode = transactionRepository.getTransactionByTransactionId(txid);
+        }
+
+        return transactionNode;
+    }
+
+
     public Transaction findTransaction(String txid, Date startDate, Date endDate, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
-        Transaction transactionNode = findTransaction(txid);
-        boolean hasDateFilter = startDate != null && endDate != null;
+        Transaction transactionNode = findTransactionProperFiltering(txid, startDate, endDate);
         boolean hasPriceFilter = startPrice != null && endPrice != null && priceUnit != null;
 
         if (transactionNode != null) {
@@ -314,10 +322,6 @@ public class BitcoinService {
             if (transactionNode.getOutputs() != null) {
 
                 Stream<OutputRelation> outputStream = transactionNode.getOutputs().parallelStream();
-
-                if (hasDateFilter) {
-                    outputStream = outputStream.filter(output -> checkTimestampInDateRange(output.getTimestamp(), startDate, endDate));
-                }
 
                 if (hasPriceFilter) {
                     outputStream = filterOutRelationStreamByPrice(outputStream, startPrice, endPrice, priceUnit);
@@ -335,11 +339,6 @@ public class BitcoinService {
             if (transactionNode.getInputs() != null) {
 
                 Stream<InputRelation> inputStream = transactionNode.getInputs().parallelStream();
-
-
-                if (hasDateFilter) {
-                    inputStream = inputStream.filter(input -> checkTimestampInDateRange(input.getTimestamp(), startDate, endDate));
-                }
 
                 if (hasPriceFilter) {
                     inputStream = filterInRelationStreamByPrice(inputStream, startPrice, endPrice, priceUnit);
