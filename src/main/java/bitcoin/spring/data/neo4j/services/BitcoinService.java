@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,9 +47,22 @@ public class BitcoinService {
         return transactionRepository.getTransactionByTransactionId(txid);
     }
 
-    private Address findAddress(String address, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
-        Address addressNode = addressRepository.getAddressByAddress(address);
+    private Address findAddressProperFiltering(String address, Date start, Date end) {
         boolean hasDateFilter = start != null && end != null;
+
+        Address addressNode;
+
+        if (hasDateFilter) {
+            addressNode = addressRepository.findAddressFilterByDate(address, start.toInstant().toEpochMilli()/ 1000, end.toInstant().toEpochMilli() / 1000);
+        } else {
+            addressNode = addressRepository.getAddressByAddress(address);
+        }
+
+        return addressNode;
+    }
+
+    private Address findAddress(String address, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
+        Address addressNode = findAddressProperFiltering(address, start, end);
         boolean hasPriceFilter = startPrice != null && endPrice != null && priceUnit != null;
 
         if (addressNode == null) {
@@ -64,11 +76,6 @@ public class BitcoinService {
                 Output outNode = this.findOutputNode(outputRelation.getOutput().getOutputId(), start, end);
                 outputRelation.setOutput(outNode);
             });
-
-            if (hasDateFilter) {
-                outputStream = outputStream
-                        .filter(out -> checkTimestampInDateRange(out.getOutput().getProducedByTransaction().getTimestamp(), start, end));
-            }
 
             if (hasPriceFilter) {
                 outputStream = filterOutputStreamByPrice(outputStream, startPrice, endPrice, priceUnit);
@@ -91,7 +98,7 @@ public class BitcoinService {
     public Address findAddress(String address, boolean inputClustering, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
         Address addressNode = findAddress(address, start, end, startPrice, endPrice, priceUnit, nodeLimit);
 
-        if (inputClustering && addressNode.getEntity() == null) {
+        if (inputClustering && addressNode != null && addressNode.getEntity() == null) {
             performInputClustering(addressNode, start, end, nodeLimit);
         }
 
@@ -258,6 +265,7 @@ public class BitcoinService {
 
         return outputNode;
     }
+
     @Transactional(readOnly = true)
     public Output findOutputNode(String id, Date startDate, Date endDate) {
         Output outputNode = outputRepository.getOutputByOutputId(id);
