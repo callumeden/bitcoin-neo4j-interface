@@ -9,14 +9,6 @@ public interface EntityRepository extends Neo4jRepository<Entity, Long> {
 
     Entity getEntityByName(@Param("name") String name);
 
-
-    @Query("MATCH (n:ENTITY) WHERE n.name = {0} \n" +
-            "MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(:OUTPUT)<-[:OUTPUTS]-(:TRANSACTION)\n" +
-            "WITH n, entityRel, a RETURN n,\n" +
-            "[ [ [ entityRel, a ] ] ], \n" +
-            "ID(n) LIMIT {1}")
-    Entity getEntity(String name, int limit);
-
     @Query("MATCH (n:ENTITY)\n" +
             "WHERE n.name = {0}\n" +
             "OPTIONAL MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(:OUTPUT)<-[:OUTPUTS]-(:TRANSACTION)-[:MINED_IN]->(b:BLOCK) \n" +
@@ -34,4 +26,14 @@ public interface EntityRepository extends Neo4jRepository<Entity, Long> {
             "[ [ [ entityRel, a ] ] ], \n" +
             "ID(n) LIMIT {3}")
     Entity getEntityAddressFiltered(String name, long start, long end, int limit);
+
+
+    @Query("PROFILE MATCH (n:ENTITY)\n" +
+            "WHERE n.name = {0}\n" +
+            "OPTIONAL MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(o:OUTPUT)\n" +
+            "WHERE o.value > {1} AND o.value < {2}\n" +
+            "WITH n, entityRel, a RETURN n, \n" +
+            "[ [ [ entityRel, a ] ] ],\n" +
+            "ID(n) LIMIT 50")
+    Entity getEntityaddressPriceFiltered(String name, double startPrice, double endPrice);
 }
