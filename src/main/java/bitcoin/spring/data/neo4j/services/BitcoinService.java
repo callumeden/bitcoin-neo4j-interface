@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -222,16 +223,26 @@ public class BitcoinService {
     public Entity findEntity(String name, Date start, Date end, String startPrice, String endPrice, String priceUnit, Integer nodeLimit) {
         Entity entityNode = entityRepository.getEntityByName(name);
 
-        Stream<Address> linkedAddressStream = entityNode.getUsesAddresses()
-                .parallelStream();
-
-        if (nodeLimit != null) {
-            linkedAddressStream = linkedAddressStream.limit(nodeLimit);
+        if (entityNode == null) {
+            return null;
         }
 
-        linkedAddressStream = linkedAddressStream.map(address -> findAddress(address.getAddress(), start, end, startPrice, endPrice, priceUnit, nodeLimit));
+        List<Address> linkedAddresses = entityNode.getUsesAddresses();
 
-        entityNode.setUserAddresses(linkedAddressStream.collect(Collectors.toList()));
+        if (linkedAddresses != null) {
+
+            Stream<Address> linkedAddressStream = linkedAddresses.parallelStream();
+
+            linkedAddressStream = linkedAddressStream.map(address -> findAddress(address.getAddress(), start, end, startPrice, endPrice, priceUnit, nodeLimit));
+
+            if (nodeLimit != null) {
+                linkedAddressStream = linkedAddressStream.limit(nodeLimit);
+            }
+
+            entityNode.setUserAddresses(linkedAddressStream.collect(Collectors.toList()));
+
+        }
+
 
         return entityNode;
     }
@@ -239,7 +250,7 @@ public class BitcoinService {
     public Output findOutputNodeCheckIfCanCluster(String id, Date startDate, Date endDate) {
         Output outputNode = findOutputNode(id, startDate, endDate);
 
-        if (outputNode.getLockedToAddress() != null) {
+        if (outputNode != null && outputNode.getLockedToAddress() != null) {
             Address addressNode = outputNode.getLockedToAddress().getAddress();
             Set<Address> clusteredAddresses = performInputClustering(addressNode, startDate, endDate, 1);
             addressNode.setHasLinkedAddresses(clusteredAddresses.size() > 0);
