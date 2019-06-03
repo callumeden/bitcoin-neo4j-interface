@@ -42,7 +42,7 @@ public interface AddressRepository extends Neo4jRepository<Address, Long> {
             "MERGE (first)-[:INPUTS_SAME_TX]-(second)")
     void performClustering();
 
-    @Query("PROFILE MATCH (a:ADDRESS)\n" +
+    @Query("MATCH (a:ADDRESS)\n" +
             "OPTIONAL MATCH (a)-[r:INPUTS_SAME_TX]-(:ADDRESS)\n" +
             "DELETE r\n" +
             "RETURN count(r)")

@@ -42,6 +42,7 @@ public class BitcoinService {
         return blockRepository.findByHash(hash);
     }
 
+    @Transactional(readOnly = true)
     private Address findAddressProperFiltering(String address, Date start, Date end, Integer limit) {
         boolean hasDateFilter = start != null && end != null;
         boolean hasLimit = limit != null;
