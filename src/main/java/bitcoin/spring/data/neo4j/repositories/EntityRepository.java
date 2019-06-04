@@ -34,7 +34,7 @@ public interface EntityRepository extends Neo4jRepository<Entity, Long> {
             "WHERE o.value > {1} AND o.value < {2}\n" +
             "WITH n, entityRel, a RETURN n, \n" +
             "[ [ [ entityRel, a ] ] ],\n" +
-            "ID(n) LIMIT 50")
+            "ID(n) LIMIT 100")
     Entity getEntityaddressPriceFiltered(String name, double startPrice, double endPrice);
 
     @Query("MATCH (n:ENTITY)\n" +
@@ -43,7 +43,7 @@ public interface EntityRepository extends Neo4jRepository<Entity, Long> {
             "WHERE o.value > {3} AND o.value < {4} AND b.timestamp > {1} AND b.timestamp < {2}\n" +
             "WITH n, entityRel, a, o RETURN n,o,\n" +
             "[ [ [ entityRel, a ] ] ],\n" +
-            "ID(n) LIMIT 50")
+            "ID(n) LIMIT 100")
     Entity getEntityAddressPriceAndTimeFiltered(String name, long startTime, long endTime, double startPrice, double endPrice);
 
     @Query("MATCH (n:ENTITY) WHERE n.name = {0} WITH n RETURN n,\n" +
