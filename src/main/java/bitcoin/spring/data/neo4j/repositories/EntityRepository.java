@@ -11,7 +11,7 @@ public interface EntityRepository extends Neo4jRepository<Entity, Long> {
 
     @Query("MATCH (n:ENTITY)\n" +
             "WHERE n.name = {0}\n" +
-            "OPTIONAL MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(:OUTPUT)<-[:INPUTS]-(:TRANSACTION)-[:MINED_IN]->(b:BLOCK) \n" +
+            "OPTIONAL MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(o:OUTPUT)-[:INPUTS]->(:TRANSACTION)-[:MINED_IN]->(b:BLOCK) \n" +
             "WHERE b.timestamp > {1} AND b.timestamp < {2}\n" +
             "WITH n, entityRel, a, b RETURN n, b,\n" +
             "[ [ [ entityRel, a ] ] ], \n" +
@@ -20,7 +20,7 @@ public interface EntityRepository extends Neo4jRepository<Entity, Long> {
 
     @Query("MATCH (n:ENTITY)\n" +
             "WHERE n.name = {0}\n" +
-            "OPTIONAL MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(:OUTPUT)<-[:INPUTS]-(:TRANSACTION)-[:MINED_IN]->(b:BLOCK) \n" +
+            "OPTIONAL MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(o:OUTPUT)-[:INPUTS]->(:TRANSACTION)-[:MINED_IN]->(b:BLOCK) \n" +
             "WHERE b.timestamp > {1} AND b.timestamp < {2}\n" +
             "WITH n, entityRel, a, b RETURN n, b,\n" +
             "[ [ [ entityRel, a ] ] ], \n" +
@@ -39,7 +39,7 @@ public interface EntityRepository extends Neo4jRepository<Entity, Long> {
 
     @Query("MATCH (n:ENTITY)\n" +
             "WHERE n.name = {0}\n" +
-            "OPTIONAL MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(o:OUTPUT)<-[:INPUTS]-(:TRANSACTION)-[:MINED_IN]->(b:BLOCK)\n" +
+            "OPTIONAL MATCH (n)<-[entityRel:HAS_ENTITY]-(a:ADDRESS)<-[:LOCKED_TO]-(o:OUTPUT)-[:INPUTS]->(:TRANSACTION)-[:MINED_IN]->(b:BLOCK)\n" +
             "WHERE o.value > {3} AND o.value < {4} AND b.timestamp > {1} AND b.timestamp < {2}\n" +
             "WITH n, entityRel, a, o RETURN n,o,\n" +
             "[ [ [ entityRel, a ] ] ],\n" +
