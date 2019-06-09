@@ -33,4 +33,13 @@ public interface TransactionRepository extends PagingAndSortingRepository<Transa
             "[ (n)<-[txInRelCoin:INPUTS]-(txInCoin:COINBASE) | [ txInRelCoin, txInCoin ] ] ], \n" +
             "ID(n) LIMIT {3}")
     Transaction getTransactionFilterTime(String transaction, long startTime, long endTime, int limit);
+
+
+    @Query("MATCH (n:TRANSACTION) WHERE\n" +
+            "n.transactionId = {0}\n" +
+            "OPTIONAL MATCH (n)<-[txInRel:INPUTS]-(txIn:OUTPUT)-[outToAddress:LOCKED_TO]->(a:ADDRESS)\n" +
+            "WITH n, txInRel, txIn, outToAddress, a RETURN n,\n" +
+            "[[  [ txInRel, txIn ] ],\n" +
+            "[[outToAddress, a]]]")
+    Transaction getTransactionInputsAndAddressOnly(String transaction);
 }

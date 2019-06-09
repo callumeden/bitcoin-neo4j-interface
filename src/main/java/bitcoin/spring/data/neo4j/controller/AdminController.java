@@ -5,6 +5,7 @@ import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RepositoryRestController
 @RequestMapping("/admin")
@@ -16,9 +17,10 @@ public class AdminController {
         this.clusteringService = clusteringService;
     }
 
-    @GetMapping("/clusterByInput")
-    public HttpEntity clusterByInput() {
-        return clusteringService.clusterByInput();
+    @GetMapping(path = "/clusterByInput")
+    public HttpEntity clusterByInput(@RequestParam("data") String transactionFiles) {
+        String[] individualFiles = transactionFiles.split(",");
+        return clusteringService.clusterByInput(individualFiles);
     }
 
     @GetMapping("/deleteClustering")
