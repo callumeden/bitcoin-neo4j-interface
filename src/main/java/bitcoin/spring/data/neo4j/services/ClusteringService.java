@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import util.CsvWriter;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -73,9 +74,11 @@ public class ClusteringService {
             this.writer = new CsvWriter("SAME_OWNER", "./out", getFilePrefix(threadId), Integer.MAX_VALUE);
 
             System.out.println(this.filePath);
-            try (BufferedReader br = Files.newBufferedReader(Paths.get(this.filePath))) {
 
-                for (String line; (line = br.readLine()) != null; ) {
+            try (BufferedReader br = Files.newBufferedReader(Paths.get(this.filePath))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+
                     String[] data = line.split(",");
                     String txid = data[0];
                     Transaction tx = transactionRepository.getTransactionInputsAndAddressOnly(txid);
@@ -120,7 +123,7 @@ public class ClusteringService {
         private String getFilePrefix(long threadId) {
             Date date= new Date();
             long time = date.getTime();
-            return "thread-" + threadId + "-" + time;
+            return "thread-" + threadId + "-" + this.filePath + "-" + time;
         }
     }
 }
