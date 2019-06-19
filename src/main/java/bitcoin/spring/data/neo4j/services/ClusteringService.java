@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import util.CsvWriter;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -116,14 +115,15 @@ public class ClusteringService {
                 System.out.println("finished file " + this.filePath + "............................................");
                 writer.flush();
             } catch (IOException e) {
+                System.out.println("----------------- CRITICAL ERROR ------------------------------");
                 e.printStackTrace();
             }
         }
 
         private String getFilePrefix(long threadId) {
-            Date date= new Date();
+            Date date = new Date();
             long time = date.getTime();
-            return "thread-" + threadId + "-" + this.filePath + "-" + time;
+            return "thread-" + threadId + "-" + time;
         }
     }
 }
