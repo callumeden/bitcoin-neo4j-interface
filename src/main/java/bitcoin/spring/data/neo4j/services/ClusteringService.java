@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -117,7 +118,9 @@ public class ClusteringService {
         }
 
         private String getFilePrefix(long threadId) {
-            return "thread-" + threadId;
+            Date date= new Date();
+            long time = date.getTime();
+            return "thread-" + threadId + "-" + time;
         }
     }
 }
