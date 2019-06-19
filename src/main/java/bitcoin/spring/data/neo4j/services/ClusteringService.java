@@ -72,7 +72,7 @@ public class ClusteringService {
             long threadId = Thread.currentThread().getId();
             this.writer = new CsvWriter("SAME_OWNER", "./out", getFilePrefix(threadId), Integer.MAX_VALUE);
 
-            System.out.println(this.filePath);
+            System.out.println("--------" + this.filePath + "---------------\n\n");
 
             try (BufferedReader br = Files.newBufferedReader(Paths.get(this.filePath))) {
                 String line;
